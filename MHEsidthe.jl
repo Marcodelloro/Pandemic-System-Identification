@@ -2,7 +2,7 @@
 using MAT
 using DataFrames
 using Dates
-using OrdinaryDiffEq
+using OrdinaryDiffEq, LinearAlgebra
 using Optimization, OptimizationPolyalgorithms, OptimizationOptimJL
 using SciMLSensitivity, Zygote, ForwardDiff
 using Plots, LaTeXStrings
@@ -66,33 +66,35 @@ end
 
 function loss(p)
     sol = simulate(p)
-    # loss = sum(abs2, ( (sol .- ymeas) ./ maximum.(eachrow(ymeas)) )) #+ sum(abs2, p - p_tilde)
-    loss = sum(abs2, ( (sol .- ymeas) ./ std.(eachrow(measure_mat)) ))
+    loss = sum(abs2, ((sol.- ymeas) ./ std.(eachrow(ymeas)) )) + sum(abs2,  sol[:,1].- x_tilde) + sum(abs2, p - p_tilde) 
 end
 
 p_lb = [0.05, 0.005, 1e-4, 1e-4, 1e-4] # lower bounds on parameters
-p_ub = [0.8, 0.6, 0.6, 0.5, 0.5] # upper bound on parameters
+p_ub = [0.8, 0.6, 0.6, 0.5, 0.5] # upper bound on parametersu0
 
-states_dyn = Array{Float64}(undef, 6, 1)
-params_dyn = Array{Float64}(undef, 5, 1)
+states_dyn = [ S_data[N_mhe]; I_data[N_mhe]; D_data[N_mhe]; T_data[N_mhe]; H_data[N_mhe]; E_data[N_mhe] ]
+params_dyn = [ α0; γ0; δ0; σ0; τ0 ]
 
 for k in N_mhe:N-N_mhe
-#for k in N_mhe:1:N_mhe+10 # Test for three consecutive time windows
     global u0
-    global ymeas = measure_mat[:, k-N_mhe+1:k] #available measurement for each time window 
+    global ymeas = measure_mat[:, k-N_mhe+1:k] #available measurement for each time window
+    # global Z = diagm([1,1,1,1,1,1])
 
     if k == N_mhe
+        # u0 = u0 in the first iteration (for simulate(p) function)
+        global x_tilde = u0
         global p_tilde = p0
     else 
-        u0 = reshape(opti_odesol[:,2],6,1)
-        global p_tilde = optires.u
+        u0 = reshape(opti_odesol[:,2],6,1) # initial condition for the new simulate(p) function
+        global x_tilde = reshape(opti_odesol[:,2],6,1)
+        global p_tilde = reshape(optires.u, 5, 1) 
     end
 
     adtype = Optimization.AutoForwardDiff()
     optf = Optimization.OptimizationFunction((x, p) -> loss(x), adtype)
     optprob = Optimization.OptimizationProblem(optf, p0, lb=p_lb, ub=p_ub) # Initial guess for parameter estimation
     optires = Optimization.solve(optprob, Ipopt.Optimizer(), maxiters = 5000) # Ipopot Optimizer
-    opti_odesol = solve(remake(prob, u0=u0, p = optires.u), Tsit5(), saveat = tsteps)
+    opti_odesol = solve(remake(prob, u0 = u0, p = optires.u), Tsit5(), saveat = tsteps)
     opti_odesol = reduce(hcat,opti_odesol.u)
 
     # Save of the optimization values
@@ -101,8 +103,6 @@ for k in N_mhe:N-N_mhe
 
     # update on the initial conditions
     p0 = reshape(optires.u, 5, 1)
-    u0 = reshape(opti_odesol[:,2],6,1)
-
 end
 
 # --- Results Plot ---
