@@ -15,8 +15,8 @@ N_mhe = 21       # Estimation horizon (3 weeks)
 Ts = 1
 
 # Create the date vector 
-start_date = Date(2020, 8, 31) # January 1, 2023
-end_date = Date(2021, 10, 3)  # January 10, 2023
+start_date = Date(2020, 8, 31)
+end_date = Date(2021, 10, 3)
 date = collect(start_date:end_date)
 
 SIDTTHEfile = matopen("SIDTTHE_data_DEF.mat")
