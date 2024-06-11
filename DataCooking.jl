@@ -1,6 +1,7 @@
 using XLSX, CSV, MAT
 using LinearAlgebra
 using DataFrames, Dates, Statistics
+using Plots
 
 # Age percentage in compartments from iss database loading
 dfD = CSV.read("/Users/marcodelloro/Desktop/Pandemic-System-Identification/Age Compatments Distributions/issITApositivi.csv", DataFrame)
@@ -53,6 +54,7 @@ SIDTTHEfile = matopen("SIDTTHE_data_DEF.mat")
 SIDTTHE_data = read(SIDTTHEfile, "SIDTTHE_data")
 close(SIDTTHEfile)
 
+# Struct with the data for the different compartments
 struct Compartment
     name::String
     young::Matrix{Float64}
@@ -66,8 +68,25 @@ T1_data = Compartment("Hospitalised", SIDTTHE_data[3, 1]["data"] .* dfT1_filt[!,
 T2_data = Compartment("IntensiveCare", SIDTTHE_data[4, 1]["data"] .* dfT2_filt[!,"0-39 anni"]', SIDTTHE_data[4, 1]["data"] .* dfT2_filt[!,"40-59 anni"]',SIDTTHE_data[4, 1]["data"] .* dfT2_filt[!,"60-79 anni"]', (SIDTTHE_data[4, 1]["data"] .* dfT2_filt[!,"80-89 anni"]') + (SIDTTHE_data[4, 1]["data"] .* dfT2_filt[!,"≥90 anni"]'))
 E_data = Compartment("Deceased", SIDTTHE_data[6, 1]["data"] .* dfE_filt[!,"0-39 anni"]', SIDTTHE_data[6, 1]["data"] .* dfE_filt[!,"40-59 anni"]',SIDTTHE_data[6, 1]["data"] .* dfE_filt[!,"60-79 anni"]', (SIDTTHE_data[6, 1]["data"] .* dfE_filt[!,"80-89 anni"]') + (SIDTTHE_data[6, 1]["data"] .* dfE_filt[!,"≥90 anni"]'))
 
+D_df = DataFrame( Date = date, u40 = vec(D_data.young), mid = vec(D_data.mid),
+    old = vec(D_data.old), ger = vec(D_data.ger)
+)
+
+T1_df = DataFrame( Date = date, u40 = vec(T1_data.young), mid = vec(T1_data.mid),
+    old = vec(T1_data.old), ger = vec(T1_data.ger)
+)
+
+T2_df = DataFrame( Date = date, u40 = vec(T2_data.young), mid = vec(T2_data.mid),
+    old = vec(T2_data.old), ger = vec(T2_data.ger)
+)
+
+E_df = DataFrame( Date = date, u40 = vec(E_data.young), mid = vec(E_data.mid),
+    old = vec(E_data.old), ger = vec(E_data.ger)
+)
+
 # Estimation of known Healed individuals
 raw_dfΔD = CSV.read("/Users/marcodelloro/Desktop/Pandemic-System-Identification/Age Compatments Distributions/issITAnewpos.csv", DataFrame)
+raw_dfΔE = CSV.read("/Users/marcodelloro/Desktop/Pandemic-System-Identification/Age Compatments Distributions/issITAnewdeceased.csv", DataFrame)
 
 # Function to sum elements in different columns for the "New Detected" data
 function sum_columns(df::DataFrame)
@@ -80,7 +99,7 @@ function sum_columns(df::DataFrame)
     )
     for i in 1:nrow(df)
         result_df.u40[i] = sum(skipmissing(df[i, 2:6]); init=0)   # u40 summed cols
-        result_df.mid[i] = sum(skipmissing(df[i, 7:8]); init=0)  # 40-60 summed cols
+        result_df.mid[i] = sum(skipmissing(df[i, 7:8]); init=0)   # 40-60 summed cols
         result_df.old[i] = sum(skipmissing(df[i, 9:10]); init=0)  # 60-80 summed cols
         result_df.ger[i] = sum(skipmissing(df[i, 11:12]); init=0) # 80+ summed cols
     end
@@ -88,4 +107,47 @@ function sum_columns(df::DataFrame)
     return result_df
 end
 
-dfΔD = sum_columns(raw_dfΔD)
+dfΔD = sum_columns(raw_dfΔD[(raw_dfΔD.data .>= start_date) .& (raw_dfΔD.data .<= end_date), :])
+
+cumsum_ΔD = DataFrame(
+    Date = raw_dfΔD.data,
+    u40 = cumsum(sum_columns(raw_dfΔD).u40),
+    mid = cumsum(sum_columns(raw_dfΔD).mid),
+    old = cumsum(sum_columns(raw_dfΔD).old),
+    ger = cumsum(sum_columns(raw_dfΔD).ger)
+)
+
+Ẽ = DataFrame(
+Date = raw_dfΔE.data,
+    u40 = cumsum(sum_columns(raw_dfΔE).u40),
+    mid = cumsum(sum_columns(raw_dfΔE).mid),
+    old = cumsum(sum_columns(raw_dfΔE).old),
+    ger = cumsum(sum_columns(raw_dfΔE).ger)
+)
+
+Ẽ_df = Ẽ[(Ẽ.Date .>= start_date) .& (Ẽ.Date .<= end_date), :] # New actually utilised Deceased Number (More reliable)
+
+function reconH(df::DataFrame, csum_df::DataFrame)
+    result_H = DataFrame(
+        Date = df[!, 1],
+        u40 = Vector{Float64}(undef, nrow(df)),
+        mid = Vector{Float64}(undef, nrow(df)),
+        old = Vector{Float64}(undef, nrow(df)),
+        ger = Vector{Float64}(undef, nrow(df))
+    )
+    for j in 1:nrow(dfΔD)
+        idx = findfirst(row -> row.Date == start_date, eachrow(csum_df))-1
+        result_H.u40[j] = csum_df.u40[idx + j] - D_df.u40[j] - T1_df.u40[j] - T2_df.u40[j] - Ẽ_df.u40[j]
+        result_H.mid[j] = csum_df.mid[idx + j] - D_df.mid[j] - T1_df.mid[j] - T2_df.mid[j] - Ẽ_df.mid[j]
+        result_H.old[j] = csum_df.old[idx + j] - D_df.old[j] - T1_df.old[j] - T2_df.old[j] - Ẽ_df.old[j]
+        result_H.ger[j] = csum_df.ger[idx + j] - D_df.ger[j] -  T1_df.ger[j] - T2_df.ger[j] - Ẽ_df.ger[j]
+    end
+    return result_H
+end
+
+actualH = reconH(dfΔD,cumsum_ΔD)
+
+plot(actualH.Date, actualH.u40, label="u40", xlabel="Date", ylabel="Population", title="Healed Individuals", linewidth=3)
+plot!(actualH.Date, actualH.mid, label="mid", linewidth=3)
+plot!(actualH.Date, actualH.old, label="old", linewidth=3)
+plot!(actualH.Date, actualH.ger, label="ger", linewidth=3)
