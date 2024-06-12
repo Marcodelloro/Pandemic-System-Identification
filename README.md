@@ -10,5 +10,43 @@ This repository contains the code and data for the system identification part re
 
 `SIDTTHE_data_DEF.mat`: Dataset used in the system identification process. These data have been collected from the [Italian COVID-19 repository](https://github.com/pcm-dpc/COVID-19) and pre-processed. Ensure this file is in the same directory as the Julia script for the code to run correctly
 
+## Data Folders 
 
+**Age Compartments Distributions**
 
+`issITAdeceased.csv`: Trend of percentages by age groups related to DECEASED INDIVIDUALS (Deaths, reported on the day of death) in Italy.
+
+`issITAhospitalised.csv`: Trend of percentages by age groups related to HOSPITALISED INDIVIDUALS (New hospitalizations, reported on the date of admission) in Italy.
+
+`issITAicu.csv`: Trend of percentages by age groups related to INTENSIVE CARE INDIVIDUALS (New ICU admissions, referred to the date of admission) in Italy.
+
+`issITApositivi.csv`: Trend of percentages by age groups related to POSITIVE INDIVIDUALS (New Positive Tests, referred to the date of Testing) in Italy.
+
+**Age New Cases Data**
+
+`issITAnew_ICU.csv`: Trend of daily numbers by age group of new ICU cases in Italy. Data reported refers to the 7-day interval moving average.
+
+`issITAnew_ricoveri.csv`: Trend of daily numbers by age group of new Hospitalisations cases in Italy. Data reported refers to the 7-day interval moving average.
+
+`issITAnewdeceased.csv`: Trend of daily numbers by age group of new Deceased (Deaths) cases in Italy. Data reported refers to the 7-day interval moving average.
+
+`issITAnewpos.csv`: Trend of daily numbers by age group of new Positive cases in Italy. Data reported refers to the 7-day interval moving average.
+
+**National Trends**
+
+`WeekTrend_ITA.csv`: Trend of daily numbers of CURRENTLY POSITIVE, HEALED, DECEASED and TOTAL CASES. Data in 7-day moving average.
+
+`DailyTrend_ITA.csv`: Trend of daily numbers of:
+ - Currently Hospitalised
+ - Currently in ICU
+ - Currently Positive
+ - Δ variation Positive
+ - New Positive Cases 
+ - Currently Healed
+ - Currently Deceased
+ - Cumulated Number of Positive Cases
+ - New Δ(+) ICUs 
+ - Δ variation ICUs
+ - Δ variation Hospitals
+
+ & extra categories like, Δ variation in total positive cases, Δ variation in new positive cases etc...
