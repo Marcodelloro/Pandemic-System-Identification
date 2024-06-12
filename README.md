@@ -13,7 +13,7 @@ This repository contains the code and data for the system identification part re
 ## Data Folders 
 
 <b><u>Age Compartments Distributions</u></b>: 
-Data from Istituto [Superiore di Sanità](https://covid19.infn.it/iss/) (ISS) in collaboration with INFN.
+Data from [Istituto Superiore di Sanità](https://covid19.infn.it/iss/) (ISS) in collaboration with INFN.
 
 `issITAdeceased.csv`: Trend of percentages by age groups related to DECEASED INDIVIDUALS (Deaths, reported on the day of death) in Italy.
 
@@ -24,7 +24,7 @@ Data from Istituto [Superiore di Sanità](https://covid19.infn.it/iss/) (ISS) in
 `issITApositivi.csv`: Trend of percentages by age groups related to POSITIVE INDIVIDUALS (New Positive Tests, referred to the date of Testing) in Italy.
 
 <b><u>Age New Cases Data</u></b>: 
-Data from Istituto [Superiore di Sanità](https://covid19.infn.it/iss/) (ISS) in collaboration with INFN.
+Data from [Istituto Superiore di Sanità](https://covid19.infn.it/iss/) (ISS) in collaboration with INFN.
 
 `issITAnew_ICU.csv`: Trend of daily numbers by age group of new ICU cases in Italy. Data reported refers to the 7-day interval moving average.
 

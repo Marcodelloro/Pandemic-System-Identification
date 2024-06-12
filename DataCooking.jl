@@ -107,6 +107,19 @@ function sum_columns(df::DataFrame)
     return result_df
 end
 
+# Function to sum all the age groups in a single column
+function sum_total(df::DataFrame)
+    result_df = DataFrame(
+        Date = df[!, 1],
+        Tot = Vector{Float64}(undef, nrow(df))
+    )
+    for i in 1:nrow(df)
+        result_df.Tot[i] = sum(skipmissing(df[i, 2:end]); init=0) # 80+ summed cols
+    end
+
+    return result_df
+end
+
 dfΔD = sum_columns(raw_dfΔD[(raw_dfΔD.data .>= start_date) .& (raw_dfΔD.data .<= end_date), :])
 
 cumsum_ΔD = DataFrame(
@@ -146,8 +159,9 @@ function reconH(df::DataFrame, csum_df::DataFrame)
 end
 
 actualH = reconH(dfΔD,cumsum_ΔD)
-
+#= # plot of the H values for the different age groups
 plot(actualH.Date, actualH.u40, label="u40", xlabel="Date", ylabel="Population", title="Healed Individuals", linewidth=3)
 plot!(actualH.Date, actualH.mid, label="mid", linewidth=3)
 plot!(actualH.Date, actualH.old, label="old", linewidth=3)
 plot!(actualH.Date, actualH.ger, label="ger", linewidth=3)
+ =#
