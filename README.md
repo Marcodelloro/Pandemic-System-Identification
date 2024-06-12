@@ -13,6 +13,7 @@ This repository contains the code and data for the system identification part re
 ## Data Folders 
 
 <b><u>Age Compartments Distributions</u></b>: 
+Data from Istituto [Superiore di Sanità](https://covid19.infn.it/iss/) (ISS) in collaboration with INFN.
 
 `issITAdeceased.csv`: Trend of percentages by age groups related to DECEASED INDIVIDUALS (Deaths, reported on the day of death) in Italy.
 
@@ -23,6 +24,7 @@ This repository contains the code and data for the system identification part re
 `issITApositivi.csv`: Trend of percentages by age groups related to POSITIVE INDIVIDUALS (New Positive Tests, referred to the date of Testing) in Italy.
 
 <b><u>Age New Cases Data</u></b>: 
+Data from Istituto [Superiore di Sanità](https://covid19.infn.it/iss/) (ISS) in collaboration with INFN.
 
 `issITAnew_ICU.csv`: Trend of daily numbers by age group of new ICU cases in Italy. Data reported refers to the 7-day interval moving average.
 
@@ -33,6 +35,7 @@ This repository contains the code and data for the system identification part re
 `issITAnewpos.csv`: Trend of daily numbers by age group of new Positive cases in Italy. Data reported refers to the 7-day interval moving average.
 
 <b><u>National Trends</u></b>: 
+Data from [Protezione Civile Github Dataset](https://github.com/pcm-dpc/COVID-19) in collaboration with INFN.
 
 `WeekTrend_ITA.csv`: Trend of daily numbers of CURRENTLY POSITIVE, HEALED, DECEASED and TOTAL CASES. Data in 7-day moving average.
 
