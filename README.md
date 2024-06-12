@@ -12,7 +12,7 @@ This repository contains the code and data for the system identification part re
 
 ## Data Folders 
 
-**Age Compartments Distributions**
+<b><u>Age Compartments Distributions</u></b>: 
 
 `issITAdeceased.csv`: Trend of percentages by age groups related to DECEASED INDIVIDUALS (Deaths, reported on the day of death) in Italy.
 
@@ -22,7 +22,7 @@ This repository contains the code and data for the system identification part re
 
 `issITApositivi.csv`: Trend of percentages by age groups related to POSITIVE INDIVIDUALS (New Positive Tests, referred to the date of Testing) in Italy.
 
-**Age New Cases Data**
+<b><u>Age New Cases Data</u></b>: 
 
 `issITAnew_ICU.csv`: Trend of daily numbers by age group of new ICU cases in Italy. Data reported refers to the 7-day interval moving average.
 
@@ -32,7 +32,7 @@ This repository contains the code and data for the system identification part re
 
 `issITAnewpos.csv`: Trend of daily numbers by age group of new Positive cases in Italy. Data reported refers to the 7-day interval moving average.
 
-**National Trends**
+<b><u>National Trends</u></b>: 
 
 `WeekTrend_ITA.csv`: Trend of daily numbers of CURRENTLY POSITIVE, HEALED, DECEASED and TOTAL CASES. Data in 7-day moving average.
 
@@ -49,4 +49,4 @@ This repository contains the code and data for the system identification part re
  - Δ variation ICUs
  - Δ variation Hospitals
 
- & extra categories like, Δ variation in total positive cases, Δ variation in new positive cases etc...
+    & extra categories like, Δ variation in total positive cases, Δ variation in new positive cases etc...
