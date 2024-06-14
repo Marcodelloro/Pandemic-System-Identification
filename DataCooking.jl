@@ -85,8 +85,8 @@ E_df = DataFrame( Date = date, u40 = vec(E_data.young), mid = vec(E_data.mid),
 )
 
 # Estimation of known Healed individuals
-raw_dfΔD = CSV.read("/Users/marcodelloro/Desktop/Pandemic-System-Identification/Age Compatments Distributions/issITAnewpos.csv", DataFrame)
-raw_dfΔE = CSV.read("/Users/marcodelloro/Desktop/Pandemic-System-Identification/Age Compatments Distributions/issITAnewdeceased.csv", DataFrame)
+raw_dfΔD = CSV.read("/Users/marcodelloro/Desktop/Pandemic-System-Identification/Age New Cases Data/issITAnewpos.csv", DataFrame)
+raw_dfΔE = CSV.read("/Users/marcodelloro/Desktop/Pandemic-System-Identification/Age New Cases Data/issITAnewdeceased.csv", DataFrame)
 
 # Function to sum elements in different columns for the "New Detected" data
 function sum_columns(df::DataFrame)
@@ -159,9 +159,5 @@ function reconH(df::DataFrame, csum_df::DataFrame)
 end
 
 actualH = reconH(dfΔD,cumsum_ΔD)
-#= # plot of the H values for the different age groups
-plot(actualH.Date, actualH.u40, label="u40", xlabel="Date", ylabel="Population", title="Healed Individuals", linewidth=3)
-plot!(actualH.Date, actualH.mid, label="mid", linewidth=3)
-plot!(actualH.Date, actualH.old, label="old", linewidth=3)
-plot!(actualH.Date, actualH.ger, label="ger", linewidth=3)
- =#
+CSV.write("Reconstructed_H.csv", actualH)
+
