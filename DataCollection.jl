@@ -4,9 +4,10 @@ using LinearAlgebra
 using DataFrames, Dates, Statistics
 using Plots
 
-start_date = Date("2020-08-31")
-end_date = Date("2021-10-03")
+global start_date = Date("2020-08-31")
+global end_date = Date("2021-10-03")
 df_H = CSV.read("Reconstructed_H.csv", DataFrame)
+df_D = CSV.read("Reconstructed_D.csv", DataFrame)
 
 function sum_columns(df::DataFrame)
     result_df = DataFrame(
@@ -63,6 +64,7 @@ df_perc_T2 = CSV.read("/Users/marcodelloro/Desktop/Pandemic-System-Identificatio
 # Deceased/Deaths data available 
 raw_dfΔE = CSV.read("/Users/marcodelloro/Desktop/Pandemic-System-Identification/Age New Cases Data/issITAnewdeceased.csv", DataFrame)
 dfΔE = sum_columns(raw_dfΔE)
+dfΔE = dfΔE[(dfΔE.Date .>= start_date) .& (dfΔE.Date .<= end_date), :]
 dfΔE_tot = sum_total(raw_dfΔE)
 dfΔE_tot[!,"Cumulated_Sum"]= cumsum(dfΔE_tot.Tot) # total sum based on ISS data
 dfΔE_2 = dfΔE_tot[(dfΔE_tot.Date .>= start_date) .& (dfΔE_tot.Date .<= end_date), :]
@@ -102,7 +104,7 @@ H_dy =  DailyTrend_df.guariti # Currently Healed individuals
 # D values for the different age groups vs SUM
 plot(dfΔD_2.Date, dfΔD_2.u40, label="u40", xlabel="Date", ylabel="Population", title=" D - Detected Individuals", linewidth=1.5)
 plot!(dfΔD_2.Date, dfΔD_2.mid, label="mid", linewidth=1.5)
-plot!(dfΔD_2.Date, dfΔD_2.old, label="old", linewidth=1.5)
+plot!(dfΔD_2.Date, dfΔD_2.old, label="old", linewidth=1.5) 
 plot!(dfΔD_2.Date, dfΔD_2.ger, label="ger", linewidth=1.5)
 plot!(dfΔD_2.Date, dfΔD_tot.Tot, label="AgeGroups Sum", linewidth=2.5)
 
@@ -127,3 +129,72 @@ plot!(df_H.Date, df_H_tot.Tot, label="AgeGroups Sum", linewidth=2.5)
 # H values between sources
 plot(df_H.Date, df_H_tot.Tot, label="AgeGroups Sum", linewidth=2.5)
 plot!(df_H.Date, H_dy, label="Daily Values", xlabel="Date", ylabel="Population", title="H - Healed Individuals", linewidth=2.5)
+
+
+#                                     ---- Capture-Recapture code ----
+
+#= This part of code is based on the paper "Estimating the undetected infections in the Covid-19 outbreak by harnessing capture–recapture methods"
+by Dankmar Böhning et Al.
+The Following code purpose is estimate data for "I" (Infected, undetected, asymptomatic, capable of infecting), in the Netherlands.
+For more info on the capture–recapture (CR) methods, refer to the original article cited above =#
+
+#= H(t) =  [ delta_N(t) * ( delta_N(t) -1 ) ] / [ 1 + delta_N(t-1) - delta_D(t)] 
+H(t) = Hidden cases bias-corrected form by Chao  =#
+
+function CaptureRecapture(dfΔD::Vector, dfΔE::Vector, dfD::Vector)
+    
+    global start_date2 = Date("2020-09-01")
+    HidCases = DataFrame(
+        Date = collect(start_date2:Day(1):end_date),
+        ΔI = Vector{Float64}(undef, length(dfΔD)-1),
+        varΔI = Vector{Float64}(undef, length(dfΔD)-1),
+        I = Vector{Float64}(undef, length(dfΔD)-1)
+    )
+   
+    for ii = 2:length(dfΔD)
+        factor = dfΔD[ii-1] - dfΔE[ii]
+            if factor < 0
+               factor = 0
+            end
+        num_ΔI = dfΔD[ii] * (dfΔD[ii] -1)
+        den_ΔI = 1 + factor
+        HidCases.ΔI[ii-1] = num_ΔI/den_ΔI
+        HidCases.varΔI[ii-1] = 1.96 * sqrt(
+                                ( dfΔD[ii]^4 ) / (den_ΔI^3)  + 
+                                ( 4 * dfΔD[ii]^3 ) / (den_ΔI^2) +
+                             ( dfΔD[ii]^2 ) / (den_ΔI)  )
+        
+        HidCases.I[ii-1] = dfD[ii] * (HidCases.ΔI[ii-1]/dfΔD[ii])
+
+    end
+    return HidCases
+end
+
+I_u40 = CaptureRecapture(dfΔD_2.u40, dfΔE.u40, df_D.u40)
+I_mid = CaptureRecapture(dfΔD_2.mid, dfΔE.mid, df_D.mid)
+I_old = CaptureRecapture(dfΔD_2.old, dfΔE.old, df_D.old)
+I_ger = CaptureRecapture(dfΔD_2.ger, dfΔE.ger, df_D.ger)
+
+I_age = ( u40 = I_u40,  mid = I_mid, old = I_old, ger = I_ger )
+
+# ΔI values compared to ΔD (age compartment based)
+plot(ΔI_age.u40.Date, ΔI_age.u40.ΔI, ribbon=ΔI_age.u40.varΔI,fillalpha=.5,label="ΔI-Capture Recapture", xlabel="Date", ylabel="Population", title=" ΔI - Infected Individuals", linewidth=1.5)
+scatter!(dfΔD_2.Date, dfΔD_2.u40, label="ΔD-Data", ms=2, mc=:red, markerstrokecolor=:red, ma=0.6)
+
+ratios_age = ( u40 = ΔI_age.u40.ΔI./dfΔD_2.u40[2:end],  
+               mid = ΔI_age.mid.ΔI./dfΔD_2.mid[2:end],
+               old = ΔI_age.old.ΔI./dfΔD_2.old[2:end],  
+               ger = ΔI_age.ger.ΔI./dfΔD_2.ger[2:end]
+)
+
+I = DataFrame( Date = collect(start_date2:Day(1):end_date),
+               u40 = Vector{Float64}(undef,length(dfΔD)-1),
+               mid = Vector{Float64}(undef,length(dfΔD)-1),
+               old = Vector{Float64}(undef,length(dfΔD)-1),
+               ger = Vector{Float64}(undef,length(dfΔD)-1) 
+)
+Infected.Iinfected_avg.data = pos.data .* ratio_undetected;
+
+
+
+
