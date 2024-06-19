@@ -10,6 +10,10 @@ This repository contains the code and data for the system identification part re
 
 `SIDTTHE_data_DEF.mat`: Dataset used in the system identification process. These data have been collected from the [Italian COVID-19 repository](https://github.com/pcm-dpc/COVID-19) and pre-processed. Ensure this file is in the same directory as the Julia script for the code to run correctly
 
+`DataCooking.jl` and `DataCollection.jl`: Julia script to obtain data in order to fit an age-stratified model. The data are not directly available, thus raw datasets have been manipulated n order to be employed. 
+
+`PlotCode.jl`: Code to plot results of interest in order to keep other codes more clean
+
 ## Data Folders 
 
 <b><u>Age Compartments Distributions</u></b>: 

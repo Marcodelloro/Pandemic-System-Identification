@@ -6,8 +6,8 @@ using Plots
 
 global start_date = Date("2020-08-31")
 global end_date = Date("2021-10-03")
-df_H = CSV.read("Reconstructed_H.csv", DataFrame)
-df_D = CSV.read("Reconstructed_D.csv", DataFrame)
+df_H = CSV.read("Reconstructed Datasets/Reconstructed_H.csv", DataFrame)
+df_D = CSV.read("Reconstructed Datasets/Reconstructed_D.csv", DataFrame)
 
 function sum_columns(df::DataFrame)
     result_df = DataFrame(
@@ -72,6 +72,8 @@ df_perc_E = CSV.read("/Users/marcodelloro/Desktop/Pandemic-System-Identification
 
 # Healed Individuals data available 
 df_H_tot = sum_total(df_H)
+df_D_tot = sum_total(df_D)
+
 
 #                                 ---- National Overall Data based on https://github.com/pcm-dpc/COVID-19 ---- 
 
@@ -98,38 +100,6 @@ T1_dy = DailyTrend_df.ricoverati # Current Hospitalised individuals
 
 H_dy =  DailyTrend_df.guariti # Currently Healed individuals 
 ΔH_dy = DailyTrend_df.guariti # New daily Healed Individuals
-
-#                                 ---- Comparison plots ---- 
-
-# D values for the different age groups vs SUM
-plot(dfΔD_2.Date, dfΔD_2.u40, label="u40", xlabel="Date", ylabel="Population", title=" D - Detected Individuals", linewidth=1.5)
-plot!(dfΔD_2.Date, dfΔD_2.mid, label="mid", linewidth=1.5)
-plot!(dfΔD_2.Date, dfΔD_2.old, label="old", linewidth=1.5) 
-plot!(dfΔD_2.Date, dfΔD_2.ger, label="ger", linewidth=1.5)
-plot!(dfΔD_2.Date, dfΔD_tot.Tot, label="AgeGroups Sum", linewidth=2.5)
-
-# D values between sources
-plot(dfΔD_2.Date, dfΔD_tot.Tot, label="Tot Age Groups Sum", xlabel="Date", ylabel="Population", title=" D - Detected Individuals", linewidth=1.5)
-plot!(dfΔD_2.Date, D_wk, label="Weekly Mean Currently D", linewidth=1.5)
-plot!(dfΔD_2.Date, Dtot_wk, label="Weekly Cumulated", linewidth=1.5)
-#plot!(dfΔD_2.Date, D_dy, label="Daily Currently D", linewidth=1.5)
-plot!(dfΔD_2.Date, ΔD_dy, label="New Daily", linewidth=1.5)
-
-# E values between sources
-plot(dfΔD_2.Date, dfΔE_2.Cumulated_Sum, label="Tot Age Groups Sum", xlabel="Date", ylabel="Population", title="E - Deceased", linewidth=2.5)
-plot!(dfΔD_2.Date, E_dy, label="Daily Values", xlabel="Date", ylabel="Population", title="E - Deceased", linewidth=2.5)
-
-# H values for the different age groups vs SUM
-plot(df_H.Date, df_H.u40, label="u40", xlabel="Date", ylabel="Population", title=" D - Detected Individuals", linewidth=1.5)
-plot!(df_H.Date, df_H.mid, label="mid", linewidth=1.5)
-plot!(df_H.Date, df_H.old, label="old", linewidth=1.5)
-plot!(df_H.Date, df_H.ger, label="ger", linewidth=1.5)
-plot!(df_H.Date, df_H_tot.Tot, label="AgeGroups Sum", linewidth=2.5)
-
-# H values between sources
-plot(df_H.Date, df_H_tot.Tot, label="AgeGroups Sum", linewidth=2.5)
-plot!(df_H.Date, H_dy, label="Daily Values", xlabel="Date", ylabel="Population", title="H - Healed Individuals", linewidth=2.5)
-
 
 #                                     ---- Capture-Recapture code ----
 
@@ -177,24 +147,8 @@ I_ger = CaptureRecapture(dfΔD_2.ger, dfΔE.ger, df_D.ger)
 
 I_age = ( u40 = I_u40,  mid = I_mid, old = I_old, ger = I_ger )
 
-# ΔI values compared to ΔD (age compartment based)
-plot(ΔI_age.u40.Date, ΔI_age.u40.ΔI, ribbon=ΔI_age.u40.varΔI,fillalpha=.5,label="ΔI-Capture Recapture", xlabel="Date", ylabel="Population", title=" ΔI - Infected Individuals", linewidth=1.5)
-scatter!(dfΔD_2.Date, dfΔD_2.u40, label="ΔD-Data", ms=2, mc=:red, markerstrokecolor=:red, ma=0.6)
-
-ratios_age = ( u40 = ΔI_age.u40.ΔI./dfΔD_2.u40[2:end],  
-               mid = ΔI_age.mid.ΔI./dfΔD_2.mid[2:end],
-               old = ΔI_age.old.ΔI./dfΔD_2.old[2:end],  
-               ger = ΔI_age.ger.ΔI./dfΔD_2.ger[2:end]
-)
-
-I = DataFrame( Date = collect(start_date2:Day(1):end_date),
-               u40 = Vector{Float64}(undef,length(dfΔD)-1),
-               mid = Vector{Float64}(undef,length(dfΔD)-1),
-               old = Vector{Float64}(undef,length(dfΔD)-1),
-               ger = Vector{Float64}(undef,length(dfΔD)-1) 
-)
-Infected.Iinfected_avg.data = pos.data .* ratio_undetected;
-
-
+CSV.write("Reconstructed Datasets/Infected_I.csv", I_age)
+CSV.write("Reconstructed Datasets/NewDeceased_ΔE.csv", dfΔE_2)
+CSV.write("Reconstructed Datasets/NewPositive_ΔD.csv", dfΔD_2)
 
 
