@@ -3,11 +3,20 @@ using XLSX, CSV, MAT
 using LinearAlgebra
 using DataFrames, Dates, Statistics
 using Plots
-
 global start_date = Date("2020-08-31")
 global end_date = Date("2021-10-03")
+
+N_u40 = 23205875 # Total under40 pop
+N_mid = 18142711 # Total 40-60 pop
+N_old = 13408810 # Total 60-80 pop
+N_ger = 3951057  # Total 80+ pop
+N_pop = N_u40 + N_mid + N_old + N_ger 
+
 df_H = CSV.read("Reconstructed Datasets/Reconstructed_H.csv", DataFrame)
 df_D = CSV.read("Reconstructed Datasets/Reconstructed_D.csv", DataFrame)
+df_T1 = CSV.read("Reconstructed Datasets/Reconstructed_T1.csv", DataFrame)
+df_T2 = CSV.read("Reconstructed Datasets/Reconstructed_T2.csv", DataFrame)
+df_E = CSV.read("Reconstructed Datasets/Reconstructed_E.csv", DataFrame)
 
 function sum_columns(df::DataFrame)
     result_df = DataFrame(
@@ -74,7 +83,6 @@ df_perc_E = CSV.read("/Users/marcodelloro/Desktop/Pandemic-System-Identification
 df_H_tot = sum_total(df_H)
 df_D_tot = sum_total(df_D)
 
-
 #                                 ---- National Overall Data based on https://github.com/pcm-dpc/COVID-19 ---- 
 
 # Positive data available 
@@ -135,7 +143,6 @@ function CaptureRecapture(dfΔD::Vector, dfΔE::Vector, dfD::Vector)
                              ( dfΔD[ii]^2 ) / (den_ΔI)  )
         
         HidCases.I[ii-1] = dfD[ii] * (HidCases.ΔI[ii-1]/dfΔD[ii])
-
     end
     return HidCases
 end
@@ -147,8 +154,19 @@ I_ger = CaptureRecapture(dfΔD_2.ger, dfΔE.ger, df_D.ger)
 
 I_age = ( u40 = I_u40,  mid = I_mid, old = I_old, ger = I_ger )
 
+# Recreation of the "Suceptible - S" data for model fitting
+S_u40 = ( N_u40*ones(399) - vcat(I_u40.I[1], I_u40.I) - df_D.u40 - df_H.u40 - df_T1.u40 - df_T2.u40 - df_E.u40 )./ N_pop
+S_mid = ( N_mid*ones(399) - vcat(I_mid.I[1], I_mid.I) - df_D.mid - df_H.mid - df_T1.mid - df_T2.mid - df_E.mid )./ N_pop
+S_old = ( N_old*ones(399) - vcat(I_old.I[1], I_old.I) - df_D.old - df_H.old - df_T1.old - df_T2.old - df_E.old )./ N_pop
+S_ger = ( N_ger*ones(399) - vcat(I_ger.I[1], I_ger.I) - df_D.ger - df_H.ger - df_T1.ger - df_T2.ger - df_E.ger )./ N_pop
+S_df = DataFrame(Date = date, u40 = S_u40, mid = S_mid, old = S_old, ger = S_ger)
+
 CSV.write("Reconstructed Datasets/Infected_I.csv", I_age)
 CSV.write("Reconstructed Datasets/NewDeceased_ΔE.csv", dfΔE_2)
 CSV.write("Reconstructed Datasets/NewPositive_ΔD.csv", dfΔD_2)
+CSV.write("Reconstructed Datasets/Reconstructed_S.csv", S_df)
+
+
+
 
 

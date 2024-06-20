@@ -12,10 +12,6 @@ dfE = CSV.read("/Users/marcodelloro/Desktop/Pandemic-System-Identification/Age C
 start_date = Date("2020-08-31")
 end_date = Date("2021-10-03")
 date = collect(start_date:end_date)
-N_yng = 23205875 # Total under40 pop
-N_mid = 18142711 # Total 40-60 pop
-N_old = 13408810 # Total 60-80 pop
-N_eld = 3951057  # Total 80+ pop
 
 function df_normrows(df::DataFrame)
     for i in 1:nrow(df)
@@ -162,3 +158,11 @@ actualH = reconH(dfΔD,cumsum_ΔD)
 
 CSV.write("Reconstructed Datasets/Reconstructed_H.csv", actualH)
 CSV.write("Reconstructed Datasets/Reconstructed_D.csv", D_df)
+CSV.write("Reconstructed Datasets/Reconstructed_T1.csv", T1_df)
+CSV.write("Reconstructed Datasets/Reconstructed_T1.csv", T1_df)
+CSV.write("Reconstructed Datasets/Reconstructed_T2.csv", T2_df)
+CSV.write("Reconstructed Datasets/Reconstructed_E.csv", Ẽ_df)
+
+
+
+
