@@ -152,7 +152,7 @@ I_mid = CaptureRecapture(dfΔD_2.mid, dfΔE.mid, df_D.mid)
 I_old = CaptureRecapture(dfΔD_2.old, dfΔE.old, df_D.old)
 I_ger = CaptureRecapture(dfΔD_2.ger, dfΔE.ger, df_D.ger)
 
-I_age = ( u40 = I_u40,  mid = I_mid, old = I_old, ger = I_ger )
+I_age = DataFrame( u40 = I_u40.I,  mid = I_mid.I, old = I_old.I, ger = I_ger.I )
 
 # Recreation of the "Suceptible - S" data for model fitting
 S_u40 = ( N_u40*ones(399) - vcat(I_u40.I[1], I_u40.I) - df_D.u40 - df_H.u40 - df_T1.u40 - df_T2.u40 - df_E.u40 )./ N_pop

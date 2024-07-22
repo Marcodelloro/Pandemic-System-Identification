@@ -1,4 +1,3 @@
-# Load of the SIDTTHE data from matlab
 using MAT
 using DataFrames
 using Dates
@@ -10,9 +9,9 @@ using Statistics, StatsBase
 using OptimizationMOI, Ipopt
 
 Npop = 59240329  # Total Population of Italy
-N = 399          # MPC horizon length
+N = 399          # Total data length
 N_mhe = 21       # Estimation horizon (3 weeks)
-Ts = 1
+Ts = 1           # Time steps for integration
 
 # Create the date vector 
 start_date = Date(2020, 8, 31)
@@ -26,8 +25,8 @@ close(SIDTTHEfile)
 I_data = SIDTTHE_data[1, 1]["data"] / Npop
 D_data = SIDTTHE_data[2, 1]["data"] / Npop
 T_data = (SIDTTHE_data[3, 1]["data"] + SIDTTHE_data[4, 1]["data"]) / Npop
-H_data= SIDTTHE_data[5, 1]["data"] / Npop
-E_data = SIDTTHE_data[6, 1]["data"] / Npop
+H_data= SIDTTHE_data[6, 1]["data"] / Npop
+E_data = SIDTTHE_data[5, 1]["data"] / Npop
 S_data = ones(1,399) - (I_data + D_data + T_data + H_data + E_data)
 
 # Gather all the data in a single data matrix
@@ -45,7 +44,7 @@ function SIDTHEfun!(du, u, p, t)
     du[6] = t * τ                              # dE/dt
 end
 
-u0 = [S_data[1]; I_data[1]; D_data[1]; T_data[1]; H_data[1]; E_data[1]]
+u0 = [S_data[1], I_data[1], D_data[1], T_data[1], H_data[1], E_data[1]]
 α0 = 0.25 
 γ0 = 0.12
 δ0 = 0.01
@@ -59,14 +58,16 @@ tsteps = collect(range(1, stop = N_mhe, length = N_mhe))
 prob = ODEProblem(SIDTHEfun!, u0, tspan, p0)
 
 function simulate(p)
-    newprob = remake(prob, u0 = u0, p = p)
-    solsim = solve(newprob, Tsit5(), saveat = tsteps)
+    newprob = remake(prob, u0 = x_tilde, p = p)
+    solsim = solve(newprob, Tsit5(), p = p, saveat = tsteps)
     return reduce(hcat,solsim.u)
-end
+end 
 
 function loss(p)
     sol = simulate(p)
-    loss = sum(abs2, ((sol.- ymeas) ./ std.(eachrow(ymeas)) )) + sum(abs2,  sol[:,1].- x_tilde) + sum(abs2, p - p_tilde) 
+   #=loss = sum(abs2, ((sol.- ymeas) ./ maximum.(eachrow(ymeas)) ))  + sum(abs2, p - p_tilde) sum(abs2,  sol[:,1].- x_tilde) =#
+    loss = sum(abs2, ((sol.- ymeas) )) + 1e-5*sum(abs2, p - p_tilde)
+    return loss
 end
 
 p_lb = [0.05, 0.005, 1e-4, 1e-4, 1e-4] # lower bounds on parameters
@@ -76,25 +77,21 @@ states_dyn = [ S_data[N_mhe]; I_data[N_mhe]; D_data[N_mhe]; T_data[N_mhe]; H_dat
 params_dyn = [ α0; γ0; δ0; σ0; τ0 ]
 
 for k in N_mhe:N-N_mhe
-    global u0
     global ymeas = measure_mat[:, k-N_mhe+1:k] #available measurement for each time window
-    # global Z = diagm([1,1,1,1,1,1])
 
     if k == N_mhe
-        # u0 = u0 in the first iteration (for simulate(p) function)
-        global x_tilde = u0
-        global p_tilde = p0
+        global x_tilde = [ S_data[N_mhe], I_data[N_mhe], D_data[N_mhe], T_data[N_mhe], H_data[N_mhe], E_data[N_mhe] ]
+        global p_tilde = [ α0, γ0, δ0, σ0, τ0 ]
     else 
-        u0 = reshape(opti_odesol[:,2],6,1) # initial condition for the new simulate(p) function
         global x_tilde = reshape(opti_odesol[:,2],6,1)
         global p_tilde = reshape(optires.u, 5, 1) 
     end
 
     adtype = Optimization.AutoForwardDiff()
     optf = Optimization.OptimizationFunction((x, p) -> loss(x), adtype)
-    optprob = Optimization.OptimizationProblem(optf, p0, lb=p_lb, ub=p_ub) # Initial guess for parameter estimation
-    optires = Optimization.solve(optprob, Ipopt.Optimizer(), maxiters = 5000) # Ipopot Optimizer
-    opti_odesol = solve(remake(prob, u0 = u0, p = optires.u), Tsit5(), saveat = tsteps)
+    optprob = Optimization.OptimizationProblem(optf, p_tilde, lb=p_lb, ub=p_ub)
+    optires = Optimization.solve(optprob, Ipopt.Optimizer(), tol=1e-5, maxiters = 5000) # Ipopot Optimizer
+    opti_odesol = solve(remake(prob, u0 = x_tilde, p = optires.u), Tsit5(), saveat = tsteps)
     opti_odesol = reduce(hcat,opti_odesol.u)
 
     # Save of the optimization values
@@ -103,7 +100,7 @@ for k in N_mhe:N-N_mhe
 
     # update on the initial conditions
     p0 = reshape(optires.u, 5, 1)
-end
+end 
 
 # --- Results Plot ---
 plot_font = "Computer Modern"
@@ -125,7 +122,13 @@ plotD = plot!(ylabel="Population", title="D - Detected population")
 
 plotT = plot(date[N_mhe:N-N_mhe], measure_mat[4,N_mhe:N-N_mhe],label="Real Data")
 plotT = plot!(date[N_mhe:N-N_mhe], states_dyn[4,2:end],label="Sim Opti Params")
-plotT = plot!(ylabel="Population", title="T - Threaten population")
+plotT = plot!(ylabel="Population", title="T - Threatened population")
 
-plot_α = plot(date[N_mhe:N-N_mhe], params_dyn[1,2:end],label="Real Data")
-plot_α = plot!(ylabel="Population", title="α parameter")
+plotH = plot(date[N_mhe:N-N_mhe], measure_mat[5,N_mhe:N-N_mhe],label="Real Data")
+plotH = plot!(date[N_mhe:N-N_mhe], states_dyn[5,2:end],label="Sim Opti Params")
+plotH = plot!(ylabel="Population", title="H - Healed population")
+
+plotE = plot(date[N_mhe:N-N_mhe], measure_mat[6,N_mhe:N-N_mhe],label="Real Data")
+plotE = plot!(date[N_mhe:N-N_mhe], states_dyn[6,2:end],label="Sim Opti Params")
+plotE = plot!(ylabel="Population", title="E - Expired population")
+
