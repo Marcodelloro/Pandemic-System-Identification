@@ -318,6 +318,5 @@ function [res, dltp] = runMHE(N_mhe, T_sim, ymeas_struct, c_struct)
     % Second output computation: difference between consecutive estimated parameters
     dltp = zeros(size(matrix_par-1));
     dltp = abs(diff(matrix_par, 1, 1));
-
     
 end

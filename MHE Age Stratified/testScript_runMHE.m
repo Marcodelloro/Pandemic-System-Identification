@@ -56,4 +56,4 @@ ymeas.old = [ S_data.old';  [I_data.old(1) I_data.old']./Npop; D_data.old'./Npop
 ymeas.ger = [ S_data.ger';  [I_data.ger(1) I_data.ger']./Npop; D_data.ger'./Npop; (T1_data.ger + T2_data.mid)'./Npop; H_data.ger'./Npop; E_data.ger'./Npop ]; 
 
 
-[e,dltp] = runMHE(N_mhe, N_sim, Ts, ymeas, c_struct);
+[e,dltp] = runMHE(N_mhe, N_sim, ymeas, c_struct);
