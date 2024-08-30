@@ -1,4 +1,4 @@
-function [res, dltp] = runMHE(N_mhe, T_sim, ymeas_struct, c_struct)
+function [res, par] = runMHE(weightsvar, N_mhe, T_sim, ymeas_struct, c_struct)
 
     % The following FUNCTION "runMHE" performs a MHE optimization on a reduced interval f 140 days (20 weeks)
     % in order to evaluate the residuals between simulation and measured data.
@@ -22,8 +22,8 @@ function [res, dltp] = runMHE(N_mhe, T_sim, ymeas_struct, c_struct)
     %   Ts = 1;            - Integration timestep (1 day)
 
     % OUTPUT: 
-    %   res                - Matrix of the residuals between MHE simulations and actual measured data [24 (states) x 140 (time instants)]
-    %   dltp               - Matrix of the difference between consecutive parameters values obtained in the simulation [20 (n parameters) x 140 (time instants)]
+    %   res                - Matrix of the MHE simulated STATES [24 (states) x 140 (time instants)]
+    %   par                - Matrix of the MHE simulated PARAMETERS [20 (n parameters) x 140 (time instants)]
 
  % --------------------------------------------------------------------------------------------------------- %
    if T_sim < 140 || T_sim > 399
@@ -174,12 +174,17 @@ function [res, dltp] = runMHE(N_mhe, T_sim, ymeas_struct, c_struct)
         c_LUT(:, :, kk) = daily_c;
     end
 
-    %                  ---- Radomization of the weights of the cost function ----
+    %                  ---- Declarations of the weights of the cost function ----
 
-    Z1 = diag(1 + (50-1)*rand(1,6));  % 6 elements, each between 1 and 50
-    Z2 = diag(1 + (50-1)*rand(1,5));  % 5 elements, each between 1 and 50
-    Z3 = diag(1 + (50-1)*rand(1,6));  % 6 elements, each between 1 and 50
+    % Note that "weightsvar" is the actual optimization variable of the Bayesian Optimization
 
+    Z1 = diag([weightsvar(:,1), weightsvar(:,2), weightsvar(:,3),...    % weight on the states consecutive estimate
+               weightsvar(:,4), weightsvar(:,5), weightsvar(:,6)]);
+
+    Z2 = diag([weightsvar(:,7), weightsvar(:,8)...                      % weight on the params consecutive estimate
+               weightsvar(:,9), weightsvar(:,10), weightsvar(:,11)]);
+
+    Z3 = diag(ones(6,1)*weightsvar(:,12));                              % weight on the process noise on the ODE states dynamics
 
     % Constraints Setting and Solver Options
     rr = 1;
@@ -312,12 +317,9 @@ function [res, dltp] = runMHE(N_mhe, T_sim, ymeas_struct, c_struct)
     end
 
     % First output computation: difference between data and estimated states
-    data = [ ymeas_struct.u40', ymeas_struct.mid', ymeas_struct.old', ymeas_struct.ger' ];
-    res = abs(matrix_sts - data);
+    res = matrix_sts;
 
     % Second output computation: difference between consecutive estimated parameters
-    dltp = zeros(size(matrix_par-1));
-    dltp = abs(diff(matrix_par, 1, 1));
+    par = matrix_par;
 
-    
 end

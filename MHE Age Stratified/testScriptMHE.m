@@ -14,7 +14,7 @@ N_mid = 18142711; % Total 40-60 pop
 N_old = 13408810; % Total 60-80 pop
 N_ger = 3951057;  % Total 80+ pop
 Npop = N_u40 + N_mid + N_old + N_ger; % Total Italy population 
-N_sim = 140;       % MPC horizon length
+T_sim = 140;       % MPC horizon length
 N_mhe = 21;        % Estimation horizon (3 weeks)
 Ts = 1;            % Integration time step  
 
@@ -56,4 +56,48 @@ ymeas.old = [ S_data.old';  [I_data.old(1) I_data.old']./Npop; D_data.old'./Npop
 ymeas.ger = [ S_data.ger';  [I_data.ger(1) I_data.ger']./Npop; D_data.ger'./Npop; (T1_data.ger + T2_data.mid)'./Npop; H_data.ger'./Npop; E_data.ger'./Npop ]; 
 
 
-[e,dltp] = runMHE(N_mhe, N_sim, ymeas, c_struct);
+%% Bayesian optimization of Hyperparams workflow
+% see the BO steps @ https://nl.mathworks.com/help/stats/bayesian-optimization-workflow.html
+
+%                         ----- Step 1 - OPTIMIZATION VARIABLES PREPARATION ----- %
+% For each variable in my objective function, I create a variable for the BO
+%
+%   Z1  --> 6 elements vector, each between 1 and 50   ( weights on the difference between consecutive sts )
+%   Z2  --> 5 elements vector, each between 1 and 50   ( weights on the difference between consecutive param. estiamte )
+%   Z3  --> 6 elements vector, each between 1 and 20   ( weights on the process noise )
+%
+
+% Z1 vector elements 
+Z1_1 = optimizableVariable('z1_1', [1, 50], 'Type', 'integer');
+Z1_2 = optimizableVariable('z1_2', [1, 50], 'Type', 'integer');
+Z1_3 = optimizableVariable('z1_3', [1, 50], 'Type', 'integer');
+Z1_4 = optimizableVariable('z1_4', [1, 50], 'Type', 'integer');
+Z1_5 = optimizableVariable('z1_5', [1, 50], 'Type', 'integer');
+Z1_6 = optimizableVariable('z1_6', [1, 50], 'Type', 'integer');
+
+% Z1 vector elements 
+Z2_1 = optimizableVariable('z2_1', [1, 50], 'Type', 'integer');
+Z2_2 = optimizableVariable('z2_2', [1, 50], 'Type', 'integer');
+Z2_3 = optimizableVariable('z2_3', [1, 50], 'Type', 'integer');
+Z2_4 = optimizableVariable('z2_4', [1, 50], 'Type', 'integer');
+Z2_5 = optimizableVariable('z2_5', [1, 50], 'Type', 'integer');
+
+% Z1 vector elements 
+Z3  = optimizableVariable('z3', [1, 20], 'Type', 'integer');
+
+weights = [ Z1_1, Z1_2, Z1_3, Z1_4, Z1_5, Z1_6...
+            Z2_1, Z2_2, Z2_3, Z2_4, Z2_5,...
+            Z3 ];
+
+%                      ----- Step 2 - Built of the objective function   ----- %
+
+objectiveFcn = @(weights) bayesMHEObj(weights, N_mhe, T_sim, ymeas, c_struct);
+
+%                      ----- Step 3 - Bayesian optimization and results ----- %
+
+results = bayesopt(objectiveFcn, weights, ...
+                   'Verbose', 0, ...
+                   'MaxObjectiveEvaluations', 100);
+
+
+
