@@ -15,8 +15,14 @@ function objFcn = bayesMHEObj(weightsvar, N_mhe, T_sim, ymeas_struct, c_struct)
     % OUTPUT: 
     %   objFcn             - Objective function (numerical value)
 
+   % ------------------------------------------------------------------------------------------------------- %
+    % Run of the MHE algorithm
     [sts_mat, par_mat] = runMHE(weightsvar, N_mhe, T_sim, ymeas_struct, c_struct);
 
+    % modification of the 'y_meas' struct to be used into the obj function
+    y_meas = [ymeas_struct.u40' ymeas_struct.mid' ymeas_struct.old' ymeas_struct.ger'];
+    y_meas = y_meas(N_mhe:N_mhe+T_sim-1,:);
+
     % cost function computation 
-    objFcn = sumsqr(sts_mat - ymeas_struct) + sumsqr( diff(par_mat)./max(abs(diff(par_mat)), [], 1) );
+    objFcn = sumsqr(sts_mat - y_meas) + sumsqr( diff(par_mat)./max(abs(diff(par_mat)), [], 1) );
 end

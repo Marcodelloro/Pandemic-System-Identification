@@ -6,6 +6,7 @@ addpath(genpath('casadi-3.6.5-linux64-matlab2018b'))
 addpath('/Users/marcodelloro/Desktop/Pandemic-System-Identification/Reconstructed Datasets')
 import casadi.*
 set(0,'DefaultFigureWindowStyle','docked')
+load 'MHE Age Stratified'/BayesResult.mat
 
 %%  Data Loading and Initialization
 
@@ -196,9 +197,9 @@ for kk = 1:N
     c_LUT(:, :, kk) = daily_c;
 end
 
-Z1 = diag([1 1 1 1 1 1]);
-Z2 = diag([1.5 25 40 15 10]);
-Z3 = diag([1 1 5 5 2 1]);
+Z1 = diag([33 16 38	5 46 46]);
+Z2 = diag([16 6	25 8 6]);
+Z3 = diag([19 19 19 19 19 19]);
 
 % Constraints Setting and Solver Options
 rr = 1;

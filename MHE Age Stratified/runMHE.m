@@ -29,6 +29,8 @@ function [res, par] = runMHE(weightsvar, N_mhe, T_sim, ymeas_struct, c_struct)
    if T_sim < 140 || T_sim > 399
     error('Invalid value for N: %d. N must be between 140 and 399.', N);
    end
+   
+   Ts = 1;
    % ------------------------------------------------------------------------------------------------------- %
     
     %                        ----- CasADi states & dynamics initialization -----
@@ -157,7 +159,7 @@ function [res, par] = runMHE(weightsvar, N_mhe, T_sim, ymeas_struct, c_struct)
 
     % LUT for the switching matrix for every time step
     c_LUT = [];
-    for kk = 1:T_sim
+    for kk = 1:T_sim+N_mhe-1
         switch true
             case ismember(kk, 1:39)  || ismember(kk, 294:399)
                 daily_c = (c_struct.home + c_struct.schl + c_struct.work + c_struct.othr);  
@@ -178,13 +180,18 @@ function [res, par] = runMHE(weightsvar, N_mhe, T_sim, ymeas_struct, c_struct)
 
     % Note that "weightsvar" is the actual optimization variable of the Bayesian Optimization
 
-    Z1 = diag([weightsvar(:,1), weightsvar(:,2), weightsvar(:,3),...    % weight on the states consecutive estimate
-               weightsvar(:,4), weightsvar(:,5), weightsvar(:,6)]);
+    weightsAr= [  weightsvar{:, 1},  weightsvar{:, 2},  weightsvar{:, 3}, ...
+                  weightsvar{:, 4},  weightsvar{:, 5},  weightsvar{:, 6},...
+                  weightsvar{:, 7},  weightsvar{:, 8},  weightsvar{:, 9},... 
+                  weightsvar{:, 10}, weightsvar{:, 11}, weightsvar{:, 12}  ];
 
-    Z2 = diag([weightsvar(:,7), weightsvar(:,8)...                      % weight on the params consecutive estimate
-               weightsvar(:,9), weightsvar(:,10), weightsvar(:,11)]);
+    Z1 = diag([weightsAr(:,1), weightsAr(:,2), weightsAr(:,3),...    % weight on the states consecutive estimate
+               weightsAr(:,4), weightsAr(:,5), weightsAr(:,6)]);
 
-    Z3 = diag(ones(6,1)*weightsvar(:,12));                              % weight on the process noise on the ODE states dynamics
+    Z2 = diag([weightsAr(:,7), weightsAr(:,8)...                      % weight on the params consecutive estimate
+               weightsAr(:,9), weightsAr(:,10), weightsAr(:,11)]);
+
+    Z3 = diag(ones(6,1)*weightsAr(:,12));                              % weight on the process noise on the ODE states dynamics
 
     % Constraints Setting and Solver Options
     rr = 1;
@@ -272,10 +279,11 @@ function [res, par] = runMHE(weightsvar, N_mhe, T_sim, ymeas_struct, c_struct)
 
     %                                     ---- Moving Horizon FOR cycle ----
    
-    matrix_sts = []; % matrix to store simulation results
+    matrix_sts = []; % matrix to store simulation results (states)
+    matrix_par = []; % matrix to store simulation results (states)
  
     for ii = N_mhe:1:N_mhe+T_sim-1
-        % Matrix switching settings in the dynamic s
+        % Matrix switching settings in the dynamics
         rr = 1;
         for jj = 1:N_mhe
         opti.set_value(C(:,rr:rr+3), c_LUT(:,:,ii-N_mhe+jj))

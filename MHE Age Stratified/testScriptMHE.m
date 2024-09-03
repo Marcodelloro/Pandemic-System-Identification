@@ -3,18 +3,19 @@ clc
 clear all
 close all
 addpath(genpath('casadi-3.6.5-linux64-matlab2018b'))
-addpath('/Users/marcodelloro/Desktop/Pandemic-System-Identification/Reconstructed Datasets')
+addpath('Reconstructed Datasets/')
 import casadi.*
 set(0,'DefaultFigureWindowStyle','docked')
 
 %%  Data Loading and Initialization
+tic
 
 N_u40 = 23205875; % Total under40 pop
 N_mid = 18142711; % Total 40-60 pop
 N_old = 13408810; % Total 60-80 pop
 N_ger = 3951057;  % Total 80+ pop
 Npop = N_u40 + N_mid + N_old + N_ger; % Total Italy population 
-T_sim = 140;       % MPC horizon length
+T_sim = 147;       % MPC horizon length (NOTE: This must be a multiplle integer of N_mhe)
 N_mhe = 21;        % Estimation horizon (3 weeks)
 Ts = 1;            % Integration time step  
 
@@ -97,7 +98,14 @@ objectiveFcn = @(weights) bayesMHEObj(weights, N_mhe, T_sim, ymeas, c_struct);
 
 results = bayesopt(objectiveFcn, weights, ...
                    'Verbose', 0, ...
-                   'MaxObjectiveEvaluations', 100);
+                   'MaxObjectiveEvaluations', 100,...
+                   'UseParallel',true);
+
+optResults = struct();
+optResults.fullResults = results;
+
+% Save the struct to a .mat file if needed
+save('BayesResult.mat', 'optResults');  
 
 
-
+toc
