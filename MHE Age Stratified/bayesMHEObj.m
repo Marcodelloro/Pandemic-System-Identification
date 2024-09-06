@@ -23,6 +23,13 @@ function objFcn = bayesMHEObj(weightsvar, N_mhe, T_sim, ymeas_struct, c_struct)
     y_meas = [ymeas_struct.u40' ymeas_struct.mid' ymeas_struct.old' ymeas_struct.ger'];
     y_meas = y_meas(N_mhe:N_mhe+T_sim-1,:);
 
+    e = abs(sts_mat - y_meas); % residuals calculation (estimation error)
+    for m = 1:length(sts_mat)
+        for t = 1:length(sts_mat) 
+        cov_est = sum(e)
+    end
+
+
     % cost function computation 
     objFcn = sumsqr(sts_mat - y_meas) + sumsqr( diff(par_mat)./max(abs(diff(par_mat)), [], 1) );
 end
