@@ -69,26 +69,29 @@ ymeas.ger = [ S_data.ger';  [I_data.ger(1) I_data.ger']./Npop; D_data.ger'./Npop
 %
 
 % Z1 vector elements 
-Z1_1 = optimizableVariable('z1_1', [1, 50], 'Type', 'integer');
-Z1_2 = optimizableVariable('z1_2', [1, 50], 'Type', 'integer');
-Z1_3 = optimizableVariable('z1_3', [1, 50], 'Type', 'integer');
-Z1_4 = optimizableVariable('z1_4', [1, 50], 'Type', 'integer');
-Z1_5 = optimizableVariable('z1_5', [1, 50], 'Type', 'integer');
-Z1_6 = optimizableVariable('z1_6', [1, 50], 'Type', 'integer');
+Z1_1 = optimizableVariable('z1_1', [1, 20], 'Type', 'integer');
+% Z1_2 = optimizableVariable('z1_2', [1, 20], 'Type', 'integer');
+% Z1_3 = optimizableVariable('z1_3', [1, 20], 'Type', 'integer');
 
-% Z1 vector elements 
-Z2_1 = optimizableVariable('z2_1', [1, 50], 'Type', 'integer');
-Z2_2 = optimizableVariable('z2_2', [1, 50], 'Type', 'integer');
-Z2_3 = optimizableVariable('z2_3', [1, 50], 'Type', 'integer');
-Z2_4 = optimizableVariable('z2_4', [1, 50], 'Type', 'integer');
-Z2_5 = optimizableVariable('z2_5', [1, 50], 'Type', 'integer');
+% Z2 vector elements 
+Z2_1 = optimizableVariable('z2_1', [10, 50], 'Type', 'integer');
+Z2_2 = optimizableVariable('z2_2', [10, 50], 'Type', 'integer');
+Z2_3 = optimizableVariable('z2_3', [10, 50], 'Type', 'integer');
+Z2_4 = optimizableVariable('z2_4', [10, 50], 'Type', 'integer');
+Z2_5 = optimizableVariable('z2_5', [10, 50], 'Type', 'integer');
 
-% Z1 vector elements 
-Z3  = optimizableVariable('z3', [1, 20], 'Type', 'integer');
+% Z3 vector elements 
+Z3_1  = optimizableVariable('z3_1', [1, 20], 'Type', 'integer');
+Z3_2  = optimizableVariable('z3_2', [1, 20], 'Type', 'integer'); 
+Z3_3  = optimizableVariable('z3_3', [1, 20], 'Type', 'integer');
 
-weights = [ Z1_1, Z1_2, Z1_3, Z1_4, Z1_5, Z1_6...
+% weights = [ Z1_1, Z1_2, Z1_3,...
+%             Z2_1, Z2_2, Z2_3, Z2_4, Z2_5,...
+%             Z3_1, Z3_2, Z3_3];
+
+weights = [ Z1_1,...
             Z2_1, Z2_2, Z2_3, Z2_4, Z2_5,...
-            Z3 ];
+            Z3_1, Z3_2, Z3_3];
 
 %                      ----- Step 2 - Built of the objective function   ----- %
 
@@ -98,14 +101,13 @@ objectiveFcn = @(weights) bayesMHEObj(weights, N_mhe, T_sim, ymeas, c_struct);
 
 results = bayesopt(objectiveFcn, weights, ...
                    'Verbose', 0, ...
-                   'MaxObjectiveEvaluations', 100,...
-                   'UseParallel',true);
+                   'MaxObjectiveEvaluations', 20,...
+                   'UseParallel', true);
 
 optResults = struct();
 optResults.fullResults = results;
 
 % Save the struct to a .mat file if needed
-save('BayesResult.mat', 'optResults');  
-
+save('BayesResult_newCOST.mat', 'optResults');  
 
 toc

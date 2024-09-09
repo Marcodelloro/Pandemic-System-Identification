@@ -48,11 +48,11 @@ function objFcn = bayesMHEObj(weightsvar, N_mhe, T_sim, ymeas_struct, c_struct)
 
     %                     ----- Construction of test quantity NrTr/r_hat(0)^2 (Distributed as Chi-squared)----- %
 
-    testq = N .* sum(r.^2, 1)./(r_hat0).^2;
-
+     testq = N .* sum(r.^2, 1)./(r_hat0).^2;
 
     %                     ----- Construction of Cost Function For Bayes ----- %
 
-    objFcn = sumsqr( testq - ones(1,length(testq))*z_alpha );
+    penaltyTerm = ( testq - z_alpha) .* max(0, (testq - z_alpha).^3 );
+    objFcn = sum( penaltyTerm );
 
 end

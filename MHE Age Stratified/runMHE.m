@@ -1,5 +1,6 @@
 function [res, par] = runMHE(weightsvar, N_mhe, T_sim, ymeas_struct, c_struct)
 
+   
     % The following FUNCTION "runMHE" performs a MHE optimization on a reduced interval f 140 days (20 weeks)
     % in order to evaluate the residuals between simulation and measured data.
     % The active parameters which influence the results of the algorithm are the weights of the cost fucntion,
@@ -180,18 +181,32 @@ function [res, par] = runMHE(weightsvar, N_mhe, T_sim, ymeas_struct, c_struct)
 
     % Note that "weightsvar" is the actual optimization variable of the Bayesian Optimization
 
-    weightsAr= [  weightsvar{:, 1},  weightsvar{:, 2},  weightsvar{:, 3}, ...
-                  weightsvar{:, 4},  weightsvar{:, 5},  weightsvar{:, 6},...
-                  weightsvar{:, 7},  weightsvar{:, 8},  weightsvar{:, 9},... 
-                  weightsvar{:, 10}, weightsvar{:, 11}, weightsvar{:, 12}  ];
+    % weightsAr= [  weightsvar{:, 1},  weightsvar{:, 2},  weightsvar{:, 3}, ...
+    %               weightsvar{:, 4},  weightsvar{:, 5},  weightsvar{:, 6}, weightsvar{:, 7},  weightsvar{:, 8},...
+    %               weightsvar{:, 9}, weightsvar{:, 10}, weightsvar{:, 11}   ];
 
-    Z1 = diag([weightsAr(:,1), weightsAr(:,2), weightsAr(:,3),...    % weight on the states consecutive estimate
+    weightsAr= [  weightsvar{:, 1},...
+                  weightsvar{:, 2},  weightsvar{:, 3},  weightsvar{:, 4}, weightsvar{:, 5},  weightsvar{:, 6},...
+                  weightsvar{:, 7}, weightsvar{:, 8}, weightsvar{:, 9}   ];
+
+    % Z1 = diag([weightsAr(:,1), weightsAr(:,2), weightsAr(:,1),...     % weight on the states consecutive estimate
+    %            weightsAr(:,3), weightsAr(:,1), weightsAr(:,1)]);
+
+    Z1 = diag([weightsAr(:,1), weightsAr(:,1), weightsAr(:,1),...     % weight on the states consecutive estimate
+               weightsAr(:,1), weightsAr(:,1), weightsAr(:,1)]);
+    
+    % Z2 = diag([weightsAr(:,4), weightsAr(:,5)...                      % weight on the params consecutive estimate
+    %            weightsAr(:,6), weightsAr(:,7), weightsAr(:,8)]);
+
+    Z2 = diag([weightsAr(:,2), weightsAr(:,3)...                      % weight on the params consecutive estimate
                weightsAr(:,4), weightsAr(:,5), weightsAr(:,6)]);
 
-    Z2 = diag([weightsAr(:,7), weightsAr(:,8)...                      % weight on the params consecutive estimate
-               weightsAr(:,9), weightsAr(:,10), weightsAr(:,11)]);
+    % Z3 = diag([weightsAr(:,10), weightsAr(:,10), weightsAr(:,11),...
+    %            weightsAr(:,11), weightsAr(:,9), weightsAr(:,11)]);   % weight on the process noise on the ODE states dynamics
 
-    Z3 = diag(ones(6,1)*weightsAr(:,12));                              % weight on the process noise on the ODE states dynamics
+
+    Z3 = diag([weightsAr(:,7), weightsAr(:,7), weightsAr(:,9),...     % weight on the params consecutive estimate
+               weightsAr(:,9), weightsAr(:,8), weightsAr(:,9)]);
 
     % Constraints Setting and Solver Options
     rr = 1;
@@ -293,7 +308,11 @@ function [res, par] = runMHE(weightsvar, N_mhe, T_sim, ymeas_struct, c_struct)
         if ii == N_mhe   
             % First iteration "arrival cost parameters" setting
             opti.set_value(X_tilde, [ ymeas_struct.u40(:,1) ymeas_struct.mid(:,1) ymeas_struct.old(:,1) ymeas_struct.ger(:,1) ]);    
-            opti.set_value(P_tilde, ( [0.25; 0.12; 0.01; 0.02; 0.02]*ones(1,4) ));    
+            opti.set_value(P_tilde, ( [ 0.06   0.06   0.1   0.15; ...
+                                        0.3    0.13   0.12  0.12; ...
+                                        0.002  0.004  0.01  0.01; ...
+                                        0.04   0.04   0.02  0.01; ...
+                                        0.002  0.01   0.01  0.02] ));    
         else 
             % Every other iteration "arrival cost parameters"
             opti.set_value(X_tilde, currentState)   
