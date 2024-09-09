@@ -2,7 +2,7 @@ clc
 clear all 
 close all
 load 'MHE Age Stratified'/AgeOpti-Results2.mat
-addpath '/Users/marcodelloro/Desktop/Pandemic-System-Identification'
+addpath '/Users/marcodelloro/Desktop/Pandemic-System-Identification'/'Reconstructed Datasets'/
 load 'MHE Age Stratified'/AgeOpti-Results2.mat
 
 N_u40 = 23205875; % Total under40 pop
@@ -59,12 +59,8 @@ r_hat0 = sum(e.^2, 1)./N;      % value of the autocorrelation when tau = 0
 
 %                     ----- Construction of test quantity NrTr/r_hat(0)^2 (Distributed as Chi-squared)----- %
 
-testq = N .* sum(r.^2, 1)./r_hat0;
+testq = N .* sum(r.^2, 1)./(r_hat0).^2;
 
 %                     ----- Construction of Cost Function For Bayes ----- %
-
-
-
-
 
 

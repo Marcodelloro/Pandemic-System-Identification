@@ -1,7 +1,7 @@
 clc
 clear all 
 close all
-load 'MHE Age Stratified'/AgeOpti-Results2.mat
+load 'MHE Age Stratified'/AgeOpti-Results_newBayes.mat
 addpath('/Users/marcodelloro/Desktop/Pandemic-System-Identification/Reconstructed Datasets/')
 S_data = readtable('Reconstructed_S.csv'); 
 I_raw = readtable('Infected_I.csv');     
@@ -611,4 +611,4 @@ set(gca, 'TickLabelInterpreter', 'Latex');
 for idx = policy_idx
     xline(date(idx), '--', 'Color', [0.5 0.5 0.5 0.3], 'LineWidth', 1.5);
 end
-sgtitle('$\sigma Results$ - \textbf{(Hospital) Healing rate}', 'Interpreter', 'latex');
+sgtitle('$\sigma$ - \textbf{(Hospital) Healing rate}', 'Interpreter', 'latex');
