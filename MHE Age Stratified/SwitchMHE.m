@@ -3,10 +3,10 @@ clc
 clear all
 close all
 addpath(genpath('casadi-3.6.5-linux64-matlab2018b'))
-addpath('/Users/marcodelloro/Desktop/Pandemic-System-Identification/Reconstructed Datasets')
+addpath('Reconstructed Datasets/')
 import casadi.*
 set(0,'DefaultFigureWindowStyle','docked')
-load 'MHE Age Stratified'/BayesResult.mat
+load("SatBayesAGE_ResWeightsUppati.mat")
 
 %%  Data Loading and Initialization
 
@@ -27,29 +27,46 @@ T2_data = readtable('Reconstructed_T2.csv');
 H_data = readtable('Reconstructed_H.csv');
 E_data = readtable('Reconstructed_E.csv');
 
-c_home =  [  19.7896   7.35764  1.43232   1.3;
+c_struct.home =  [  19.7896   7.35764  1.43232   1.3;
              4.73514   5.62234  0.445607  0.44;
              3.26361   2.32613  4.3079    4.00; 
              3.00      2.00     4.00      3.00  ]; 
 
-c_schl =  [  24.9874    2.216       0.0889567   0.0389567;
+c_struct.schl =  [  24.9874    2.216       0.0889567   0.0389567;
              8.94216    1.1419      0.0793523   0.0293523;
              0.666502   0.0661153   0.054174    0.014174;
              0.0566502  0.0361153   0.014174    0.004174 ];
 
 
-c_work =  [  13.2266     8.39663   0.0329148    0.0229148;
+c_struct.work =  [  13.2266     8.39663   0.0329148    0.0229148;
              9.40362     8.72244   0.0357202    0.0157202;
              0.0930825   0.154919  0.000840544  0.00040544;
              0.030825    0.015491  0.00040544   0.00000001 ]; 
 
 
-c_othr =  [  44.1768     12.4868   4.61979   4.61979
+c_struct.othr =  [  44.1768     12.4868   4.61979   4.61979
              11.3875     8.96874   4.04791   4.04791
              6.62855     9.04265   8.95355   8.00000 
              3.62855     6.04265   9.00000   9.95355 ];
 
-% c = c_home + c_schl + c_work + c_othr;       % How the contact matrices work with each other
+%% Derivation of balanced social contact matrices & Test choice
+
+N_groups= [N_u40, N_mid, N_old, N_ger];
+contfields = {'home', 'schl', 'work', 'othr'}; % fields of the struct "c_struct"
+
+for f = 1:length(contfields)
+    current_field = contfields{f};
+    c_mat = c_struct.(current_field);
+    
+    for i = 1:size(c_mat, 2)
+        for j = 1:size(c_mat, 1)
+             c_struct.(current_field)(j, i) = (1 / (2 * N_groups(i))) * (c_mat(j, i) * N_groups(i) + c_mat(i, j) * N_groups(j));
+        end
+    end
+end
+
+c_tot = c_struct.home + c_struct.schl + c_struct.work + c_struct.othr;       % How the contact matrices work with each other
+normcoef = sum(c_tot, 2); 
 
 ymeas_u40 = [ S_data.u40';  [I_data.u40(1) I_data.u40']./Npop; D_data.u40'./Npop; (T1_data.u40 + T2_data.u40)'./Npop; H_data.u40'./Npop; E_data.u40'./Npop ];  
 ymeas_mid = [ S_data.mid';  [I_data.mid(1) I_data.mid']./Npop; D_data.mid'./Npop; (T1_data.mid + T2_data.mid)'./Npop; H_data.mid'./Npop; E_data.mid'./Npop ];  
@@ -91,7 +108,7 @@ h4 = casadi.SX.sym('h4',1,1);   tau4 = casadi.SX.sym('tau4',1,1);   v45 = casadi
 e4 = casadi.SX.sym('e4',1,1);                                       v46 = casadi.SX.sym('v46',1,1); 
 
 % Guessed values of lambda, assuming that older people heal slower
-lambda1 = 1/7; lambda2 = 1/12; lambda3 = 1/15; lambda4 = 1/15; 
+lambda1 = 1/15; lambda2 = 1/21; lambda3 = 1/30; lambda4 = 1/30; 
 
 x = [   s1; i1; d1; t1; h1; e1; alp1; gma1; dlt1; sgm1; tau1; ...
         s2; i2; d2; t2; h2; e2; alp2; gma2; dlt2; sgm2; tau2; ...
@@ -183,23 +200,41 @@ c_LUT = [];
 for kk = 1:N
     switch true
         case ismember(kk, 1:39)  || ismember(kk, 294:399)
-            daily_c = (c_home + c_schl + c_work + c_othr);  
+            daily_c = (c_struct.home + c_struct.schl + c_struct.work + c_struct.othr)./normcoef';  
             
         case ismember(kk, 40:68) || ismember(kk, 242:293)
-            daily_c = (c_home + c_work);  
+            daily_c = (c_struct.home + c_struct.work)./normcoef';  
             
         case ismember(kk, 69:115) || ismember(kk, 141:189)
-            daily_c = (c_home);  
+            daily_c = (c_struct.home)./normcoef';  
             
         case ismember(kk, 116:140) || ismember(kk, 190:241)
-            daily_c = (c_home/2);  
+            daily_c = (c_struct.home)./normcoef';  
     end
     c_LUT(:, :, kk) = daily_c;
 end
 
-Z1 = diag([33 16 38	5 46 46]);
-Z2 = diag([16 6	25 8 6]);
-Z3 = diag([19 19 19 19 19 19]);
+% weights for the parameters normalization
+w_u40 = [0.25; 2.86; 166.67; 2.85; 345.0];
+w_mid = [0.25; 3.70;  66.67; 2.00; 33.89];
+w_old = [0.14; 6.67;  28.57; 2.50; 10.50];
+w_ger = [0.12; 1.82;   1.67; 2.00;  5.13];
+
+
+    Z1 = diag([optResults.fullResults.XAtMinObjective{:,1}, optResults.fullResults.XAtMinObjective{:,1}, 1,... 
+               1, optResults.fullResults.XAtMinObjective{:,1}, 1]);
+    
+    Z2 = diag([optResults.fullResults.XAtMinObjective{:,2}, optResults.fullResults.XAtMinObjective{:,2}... 
+               optResults.fullResults.XAtMinObjective{:,2}, optResults.fullResults.XAtMinObjective{:,2}, optResults.fullResults.XAtMinObjective{:,2}]);
+
+    Z3 = diag([optResults.fullResults.XAtMinObjective{:,3}, optResults.fullResults.XAtMinObjective{:,3}, 1,...
+               1, optResults.fullResults.XAtMinObjective{:,3}, 1]);   
+
+    vecZ5 = repmat([optResults.fullResults.XAtMinObjective{:,4}; optResults.fullResults.XAtMinObjective{:,4}; optResults.fullResults.XAtMinObjective{:,4};...
+                    1; optResults.fullResults.XAtMinObjective{:,4}; 1], 4, 1);
+    
+    Z5 = zeros(24,24);
+    Z5(1:25:end) = vecZ5;
 
 % Constraints Setting and Solver Options
 rr = 1;
@@ -247,8 +282,8 @@ opti.subject_to(-std_old(6)*w < V(18,:) < std_old(6)*w);   opti.subject_to(-std_
 
 %                                       ---- Parameters Bounds ----
 % alpha bounds 
-opti.subject_to( 0.05  <=  X(7,:)  <= 0.8 );     opti.subject_to( 0.05  <= X(29,:)  <= 0.8 );
-opti.subject_to( 0.005 <= X(18,:)  <= 0.6 );     opti.subject_to( 0.05  <= X(40,:)  <= 0.8 );
+opti.subject_to( 0.05  <=  X(7,:)  <= 100 );     opti.subject_to( 0.05  <= X(29,:)  <= 100 );
+opti.subject_to( 0.005 <= X(18,:)  <= 100 );     opti.subject_to( 0.05  <= X(40,:)  <= 100 );
 
 % gamma bounds 
 opti.subject_to( 0.005 <= X(8,:)   <= 0.6 );     opti.subject_to( 0.005 <= X(30,:)  <= 0.6 );
@@ -269,11 +304,11 @@ opti.subject_to( 1e-4  <= X(22,:)  <= 0.5 );     opti.subject_to( 1e-4  <= X(44,
 
 %                                        ---- Objective function ----
 
-obj = sumsqr( Z1*(X(1:6,:)   - X_tilde(:,1)) ) + 100*sumsqr( Z2*(X(7:11,:)  - P_tilde(:,1)) ) + sumsqr( Z3*(Ymeas_u40 -   X(1:6,:))./std_u40 ) + ... % u40 cost 
-      sumsqr( Z1*(X(12:17,:) - X_tilde(:,2)) ) + 100*sumsqr( Z2*(X(18:22,:) - P_tilde(:,2)) ) + sumsqr( Z3*(Ymeas_mid - X(12:17,:))./std_mid ) + ... % middle aged cost 
-      sumsqr( Z1*(X(23:28,:) - X_tilde(:,3)) ) + 100*sumsqr( Z2*(X(29:33,:) - P_tilde(:,3)) ) + sumsqr( Z3*(Ymeas_old - X(23:28,:))./std_old ) + ... % senior cost
-      sumsqr( Z1*(X(34:39,:) - X_tilde(:,4)) ) + 100*sumsqr( Z2*(X(40:44,:) - P_tilde(:,4)) ) + sumsqr( Z3*(Ymeas_ger - X(34:39,:))./std_ger ) + ... % geriatric cost
-      100*sumsqr(V);
+obj = sumsqr( Z1*(X(1:6,:)   - X_tilde(:,1)) ) + sumsqr( w_u40.*Z2*(X(7:11,:)  - P_tilde(:,1)) ) + sumsqr( Z3*(Ymeas_u40 - X(1:6,:))./max(ymeas_u40, [], 2) ) + ... % u40 cost 
+      sumsqr( Z1*(X(12:17,:) - X_tilde(:,2)) ) + sumsqr( w_mid.*Z2*(X(18:22,:) - P_tilde(:,2)) ) + sumsqr( Z3*(Ymeas_mid - X(12:17,:))./max(ymeas_mid, [], 2) ) + ... % middle aged cost 
+      sumsqr( Z1*(X(23:28,:) - X_tilde(:,3)) ) + sumsqr( w_old.*Z2*(X(29:33,:) - P_tilde(:,3)) ) + sumsqr( Z3*(Ymeas_old - X(23:28,:))./max(ymeas_old, [], 2) ) + ... % senior cost
+      sumsqr( Z1*(X(34:39,:) - X_tilde(:,4)) ) + sumsqr( w_ger.*Z2*(X(40:44,:) - P_tilde(:,4)) ) + sumsqr( Z3*(Ymeas_ger - X(34:39,:))./max(ymeas_ger, [], 2) ) + ... % geriatric cost
+      sumsqr(Z5*V);
 
 
 opti.minimize(obj);
@@ -315,7 +350,11 @@ for ii = N_mhe:1:N-N_mhe
     if ii == N_mhe   
         % First iteration "arrival cost parameters" setting
         opti.set_value(X_tilde, [ ymeas_u40(:,1) ymeas_mid(:,1) ymeas_old(:,1) ymeas_ger(:,1) ]);    
-        opti.set_value(P_tilde, ( [0.25; 0.12; 0.01; 0.02; 0.02]*ones(1,4) ));    
+          opti.set_value(P_tilde, ( [ 2   1.5   1.5   1.5; ...
+                                        0.3    0.13   0.12  0.12; ...
+                                        0.002  0.004  0.01  0.01; ...
+                                        0.04   0.04   0.02  0.01; ...
+                                        0.002  0.01   0.01  0.02] )); 
     else 
         % Every other iteration "arrival cost parameters"
         opti.set_value(X_tilde, currentState)   
@@ -353,4 +392,5 @@ table_par = array2table(matrix_par, 'VariableNames', column_names_par);
 table_sts = array2table(matrix_sts, 'VariableNames', column_names_sts);
 results.par = table_par;
 results.sts = table_sts;
-save('AgeOpti-Results.mat', 'results');
+save('AgeOpti-ResBleau.mat', 'results');
+

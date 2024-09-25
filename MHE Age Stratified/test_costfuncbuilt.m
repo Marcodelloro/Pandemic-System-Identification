@@ -1,10 +1,9 @@
 clc
 clear all 
 close all
-load 'MHE Age Stratified'/AgeOpti-Results2.mat
-addpath '/Users/marcodelloro/Desktop/Pandemic-System-Identification'/'Reconstructed Datasets'/
-load 'MHE Age Stratified'/AgeOpti-Results2.mat
 
+addpath '/Users/marcodelloro/Desktop/Pandemic-System-Identification'/'Reconstructed Datasets'/
+load 'MHE Age Stratified'/AgeOpti-Res_new.mat
 N_u40 = 23205875; % Total under40 pop
 N_mid = 18142711; % Total 40-60 pop
 N_old = 13408810; % Total 60-80 pop
@@ -31,11 +30,11 @@ ymeas.ger = [ S_data.ger';  [I_data.ger(1) I_data.ger']./Npop; D_data.ger'./Npop
 % modification of the 'y_meas' struct to be used into the obj function
 y_meas = [ymeas.u40' ymeas.mid' ymeas.old' ymeas.ger'];
 y_meas = y_meas(N_mhe:N_mhe+T_sim-1,:);
-sts_mat = table2array(results.sts(1:T_sim,:));
+sts_mat = table2array(results.sts(N_mhe:T_sim+N_mhe-1,:));
 
 %% CONSTRUCTION OF THE COST FUNCTION
 
-e = abs(y_meas - sts_mat); % residuals calculation (estimation error)
+e = y_meas - sts_mat; % residuals calculation (estimation error)
 r = []; 
 N = length(y_meas);
 
@@ -59,7 +58,7 @@ r_hat0 = sum(e.^2, 1)./N;      % value of the autocorrelation when tau = 0
 
 %                     ----- Construction of test quantity NrTr/r_hat(0)^2 (Distributed as Chi-squared)----- %
 
-testq = N .* sum(r.^2, 1)./(r_hat0).^2;
+testq = N .* sum(r.^2, 1)./((r_hat0).^2);
 
 %                     ----- Construction of Cost Function For Bayes ----- %
 

@@ -1,34 +1,31 @@
-function [res, par] = runMHE(weightsvar, N_mhe, T_sim, ymeas_struct, c_struct)
+function [res, par] = runMHEog(weightsvar, N_mhe, T_sim, ymeas_struct, c_struct, normcoef)
 
-   
-    % The following FUNCTION "runMHE" performs a MHE optimization on a reduced interval f 140 days (20 weeks)
+    % The following FUNCTION "runMHE_2" performs a MHE optimization on a reduced interval of 70 days (10 weeks)
     % in order to evaluate the residuals between simulation and measured data.
     % The active parameters which influence the results of the algorithm are the weights of the cost fucntion,
     % which are imposed as random variables changing every time the function is called. 
 
+    % Compared to runMHE, runMHEog is a function running the ORIGINAL (homogeneous and deterministic) SIDTHE model
 
    % ------------------------------------------------------------------------------------------------------- %
     
     % INPUTS:
     %   N_mhe              - Estimation horizon (e.g., 21 for 3 weeks)
     %   T_sim              - Days over whcih the MHE algorithm is optimsed
-    %   ymeas_struct       - Structure containing measured data per age groups
+    %   ymeas_struct       - Structure containing measured data
     %   c_struct           - Structure containing the contact matrices
 
     % FIXED/KNOWN VALUES INSIDE OF THE FUNCTION
-    %   lambda1 = 1/7;     - Recovery rate for group "Under 40" (Pauci-symptomatic)
-    %   lambda2 = 1/12;    - Recovery rate for group "Middle Aged" (Pauci-symptomatic)
-    %   lambda3 = 1/15;    - Recovery rate for group "Senior" (Pauci-symptomatic)
-    %   lambda4 = 1/15;    - Recovery rate for group "Geriatric" (Pauci-symptomatic)
+    %   lambda = 1/10;     - Average recovery rate of the population
     %   Ts = 1;            - Integration timestep (1 day)
 
     % OUTPUT: 
-    %   res                - Matrix of the MHE simulated STATES [24 (states) x 140 (time instants)]
+    %   res                - Matrix of the MHE simulated STATES [6 (states) x 70 (time instants)]
     %   par                - Matrix of the MHE simulated PARAMETERS [20 (n parameters) x 140 (time instants)]
 
  % --------------------------------------------------------------------------------------------------------- %
-   if T_sim < 140 || T_sim > 399
-    error('Invalid value for N: %d. N must be between 140 and 399.', N);
+   if T_sim < 70 || T_sim > 399
+    error('Invalid value for N: %d. N must be between 70 and 399.', N);
    end
    
    Ts = 1;
@@ -163,16 +160,16 @@ function [res, par] = runMHE(weightsvar, N_mhe, T_sim, ymeas_struct, c_struct)
     for kk = 1:T_sim+N_mhe-1
         switch true
             case ismember(kk, 1:39)  || ismember(kk, 294:399)
-                daily_c = (c_struct.home + c_struct.schl + c_struct.work + c_struct.othr);  
+                daily_c = (c_struct.home + c_struct.schl + c_struct.work + c_struct.othr)./normcoef';  
                 
             case ismember(kk, 40:68) || ismember(kk, 242:293)
-                daily_c = (c_struct.home + c_struct.work);  
+                daily_c = (c_struct.home + c_struct.work)./normcoef';   
                 
             case ismember(kk, 69:115) || ismember(kk, 141:189)
-                daily_c = (c_struct.home);  
+                daily_c = (c_struct.home)./normcoef';  
                 
             case ismember(kk, 116:140) || ismember(kk, 190:241)
-                daily_c = (c_struct.home/2);  
+                daily_c = (c_struct.home/2)./normcoef';  
         end
         c_LUT(:, :, kk) = daily_c;
     end
@@ -191,7 +188,7 @@ function [res, par] = runMHE(weightsvar, N_mhe, T_sim, ymeas_struct, c_struct)
 
     % Z1 = diag([weightsAr(:,1), weightsAr(:,2), weightsAr(:,1),...     % weight on the states consecutive estimate
     %            weightsAr(:,3), weightsAr(:,1), weightsAr(:,1)]);
-
+    
     Z1 = diag([weightsAr(:,1), weightsAr(:,1), weightsAr(:,1),...     % weight on the states consecutive estimate
                weightsAr(:,1), weightsAr(:,1), weightsAr(:,1)]);
     
@@ -201,12 +198,11 @@ function [res, par] = runMHE(weightsvar, N_mhe, T_sim, ymeas_struct, c_struct)
     Z2 = diag([weightsAr(:,2), weightsAr(:,3)...                      % weight on the params consecutive estimate
                weightsAr(:,4), weightsAr(:,5), weightsAr(:,6)]);
 
-    % Z3 = diag([weightsAr(:,10), weightsAr(:,10), weightsAr(:,11),...
+    % Z3 = diag([weightsAr(:,9), weightsAr(:,10), weightsAr(:,11),...
     %            weightsAr(:,11), weightsAr(:,9), weightsAr(:,11)]);   % weight on the process noise on the ODE states dynamics
-
-
-    Z3 = diag([weightsAr(:,7), weightsAr(:,7), weightsAr(:,9),...     % weight on the params consecutive estimate
-               weightsAr(:,9), weightsAr(:,8), weightsAr(:,9)]);
+ 
+    Z3 = diag([weightsAr(:,7), weightsAr(:,8), weightsAr(:,9),...     % weight on the params consecutive estimate
+               weightsAr(:,9), weightsAr(:,7), weightsAr(:,9)]);
 
     % Constraints Setting and Solver Options
     rr = 1;
@@ -254,8 +250,8 @@ function [res, par] = runMHE(weightsvar, N_mhe, T_sim, ymeas_struct, c_struct)
     
     %                                       ---- Parameters Bounds ----
     % alpha bounds 
-    opti.subject_to( 0.05  <=  X(7,:)  <= 0.8 );     opti.subject_to( 0.05  <= X(29,:)  <= 0.8 );
-    opti.subject_to( 0.005 <= X(18,:)  <= 0.6 );     opti.subject_to( 0.05  <= X(40,:)  <= 0.8 );
+    opti.subject_to( 0.05  <=  X(7,:)  <= 100 );     opti.subject_to( 0.05  <= X(29,:)  <= 100 );
+    opti.subject_to( 0.005 <= X(18,:)  <= 100 );     opti.subject_to( 0.05  <= X(40,:)  <= 100 );
     
     % gamma bounds 
     opti.subject_to( 0.005 <= X(8,:)   <= 0.6 );     opti.subject_to( 0.005 <= X(30,:)  <= 0.6 );
@@ -276,12 +272,12 @@ function [res, par] = runMHE(weightsvar, N_mhe, T_sim, ymeas_struct, c_struct)
     
     %                                        ---- Objective function ----
     
-    obj = sumsqr( Z1*(X(1:6,:)   - X_tilde(:,1)) ) + 100*sumsqr( Z2*(X(7:11,:)  - P_tilde(:,1)) ) + sumsqr( Z3*(Ymeas_u40 -   X(1:6,:))./std_u40 ) + ... % u40 cost 
-          sumsqr( Z1*(X(12:17,:) - X_tilde(:,2)) ) + 100*sumsqr( Z2*(X(18:22,:) - P_tilde(:,2)) ) + sumsqr( Z3*(Ymeas_mid - X(12:17,:))./std_mid ) + ... % middle aged cost 
-          sumsqr( Z1*(X(23:28,:) - X_tilde(:,3)) ) + 100*sumsqr( Z2*(X(29:33,:) - P_tilde(:,3)) ) + sumsqr( Z3*(Ymeas_old - X(23:28,:))./std_old ) + ... % senior cost
-          sumsqr( Z1*(X(34:39,:) - X_tilde(:,4)) ) + 100*sumsqr( Z2*(X(40:44,:) - P_tilde(:,4)) ) + sumsqr( Z3*(Ymeas_ger - X(34:39,:))./std_ger ) + ... % geriatric cost
-          100*sumsqr(V);
-    
+    obj = sumsqr( Z1*(X(1:6,:)   - X_tilde(:,1)) ) + sumsqr( Z2*(X(7:11,:)  - P_tilde(:,1)) ) + sumsqr( Z3*(Ymeas_u40 - X(1:6,:))./max(ymeas_struct.u40, [], 2) ) + ... % u40 cost 
+          sumsqr( Z1*(X(12:17,:) - X_tilde(:,2)) ) + sumsqr( Z2*(X(18:22,:) - P_tilde(:,2)) ) + sumsqr( Z3*(Ymeas_mid - X(12:17,:))./max(ymeas_struct.mid, [], 2) ) + ... % middle aged cost 
+          sumsqr( Z1*(X(23:28,:) - X_tilde(:,3)) ) + sumsqr( Z2*(X(29:33,:) - P_tilde(:,3)) ) + sumsqr( Z3*(Ymeas_old - X(23:28,:))./max(ymeas_struct.old, [], 2) ) + ... % senior cost
+          sumsqr( Z1*(X(34:39,:) - X_tilde(:,4)) ) + sumsqr( Z2*(X(40:44,:) - P_tilde(:,4)) ) + sumsqr( Z3*(Ymeas_ger - X(34:39,:))./max(ymeas_struct.ger, [], 2) ) + ... % geriatric cost
+          sumsqr(V);
+
     opti.minimize(obj);
     
     % Solver Options
@@ -308,7 +304,7 @@ function [res, par] = runMHE(weightsvar, N_mhe, T_sim, ymeas_struct, c_struct)
         if ii == N_mhe   
             % First iteration "arrival cost parameters" setting
             opti.set_value(X_tilde, [ ymeas_struct.u40(:,1) ymeas_struct.mid(:,1) ymeas_struct.old(:,1) ymeas_struct.ger(:,1) ]);    
-            opti.set_value(P_tilde, ( [ 0.06   0.06   0.1   0.15; ...
+            opti.set_value(P_tilde, ( [ 2      1.5    1.5   1.5; ...
                                         0.3    0.13   0.12  0.12; ...
                                         0.002  0.004  0.01  0.01; ...
                                         0.04   0.04   0.02  0.01; ...
