@@ -56,7 +56,6 @@ Data from [Protezione Civile Github Dataset](https://github.com/pcm-dpc/COVID-19
 
 <b><u>Reconstructed Datasets</u></b>: 
 Reconstructed datasets of the Italian population divided in four age groups:
-## Age Groups
 
 1. **_u40_**:
    Individuals aged **0 to 39 years**. It includes children, young adults, and those in early adulthood.
@@ -76,20 +75,28 @@ Reconstructed datasets of the Italian population divided in four age groups:
 ## MHE Matlab Folders 
 
 <b><u>MHE Age Stratified - Single alpha</u></b>: 
+
 Folder containing all the codes to run the simulation of the SIDTHE age-stratified model, with single $\alpha$ (virus infectivity).
 Main files in the folder: 
 
 `testScriptMHE.m`: Main test script to run the MHE on the whole horizon.
-`bayesMHEObj.m`: Function performing Hyperparameters Autotuning of the MHE objective funztion by implementig bayesian optimization. 
-`runMHE.m`: Function containing MHE optimization problem in CasADi framework. 
-`PlottingMHE.m`: Code to plot the results of the MHE. 
+
+`bayesMHEObj.m`: Function performing Hyperparameters Autotuning of the MHE objective funztion by implementig bayesian optimization.
+
+`runMHE.m`: Function containing MHE optimization problem in CasADi framework.
+
+`PlottingMHE.m`: Code to plot the results of the MHE.
 
 <b><u>MHE Age Stratified</u></b>: 
+
 Folder containing all the codes to run the simulation of the SIDTHE age-stratified model, with multiple $\alpha$ (virus infectivity).
-Main files in the folder: 
+Main files in the folder:
 
 `testScriptMHE_a.m`: Main test script to run the MHE on the whole horizon.
-`bayesMHEObj_a.m`: Function performing Hyperparameters Autotuning of the MHE objective funztion by implementig bayesian optimization. 
-`runMHE_a.m`: Function containing MHE optimization problem in CasADi framework. 
-`PlottingMHE_a.m`: Code to plot the results of the MHE. 
+
+`bayesMHEObj_a.m`: Function performing Hyperparameters Autotuning of the MHE objective funztion by implementig bayesian optimization.
+
+`runMHE_a.m`: Function containing MHE optimization problem in CasADi framework.
+
+`PlottingMHE_a.m`: Code to plot the results of the MHE.
 
