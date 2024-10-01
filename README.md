@@ -2,17 +2,13 @@
 
 ## Description
 
-This repository contains the code and data for the system identification part related to the Model Predictive Pandemic Control (MPPC) research project by TU/e MOVEMENT Research Group.
+This repository contains the codes and data for the system identification part related to the Model Predictive Pandemic Control (MPPC) research project by TU/e MOVEMENT Research Group.
 
-## Files
+## Julia Files
 
-`MHEsidthe.jl`: Initial Julia script containing the main code for system identification. The method used for the identification is Moving Horizon Estimation (MHE)
+`DataCooking.jl` and `DataCollection.jl`: Julia script to obtain data in order to fit an age-stratified model. The data are not directly available, thus raw datasets have been manipulated in order to be employed. 
 
-`SIDTTHE_data_DEF.mat`: Dataset used in the system identification process. These data have been collected from the [Italian COVID-19 repository](https://github.com/pcm-dpc/COVID-19) and pre-processed. Ensure this file is in the same directory as the Julia script for the code to run correctly
-
-`DataCooking.jl` and `DataCollection.jl`: Julia script to obtain data in order to fit an age-stratified model. The data are not directly available, thus raw datasets have been manipulated n order to be employed. 
-
-`PlotCode.jl`: Code to plot results of interest in order to keep other codes more clean
+`TestingSIDTHE.jl`: Code to test the behaviour of the system to parameters obtained from moving horizon estimation (MHE).
 
 ## Data Folders 
 
@@ -57,3 +53,43 @@ Data from [Protezione Civile Github Dataset](https://github.com/pcm-dpc/COVID-19
  - Δ variation Hospitals
 
     & extra categories like, Δ variation in total positive cases, Δ variation in new positive cases etc...
+
+<b><u>Reconstructed Datasets</u></b>: 
+Reconstructed datasets of the Italian population divided in four age groups:
+## Age Groups
+
+1. **_u40_**:
+   Individuals aged **0 to 39 years**. It includes children, young adults, and those in early adulthood.
+  
+2. **_mid_**:
+   Individuals aged **40 to 59 years**, considered the largest amount of working-age population.
+
+3. **_old_**:
+   Individuals aged **60 to 79 years**. This group includes senior individuals, Heightened risks due to age-related vulnerabilitie, more prone to experience severe outcomes from the virus.
+
+4. **_ger_**:
+   Individuals aged **80 years and above**. Commonly referred to as geriatric population. Heavily affected by the COVID-19 pandemic, facing high mortality rates.
+
+   All the data are extrapolated from the code `DataCooking.jl` and `DataCollection.jl`.
+   The dataset are used to inform and identify the model.
+
+## MHE Matlab Folders 
+
+<b><u>MHE Age Stratified - Single alpha</u></b>: 
+Folder containing all the codes to run the simulation of the SIDTHE age-stratified model, with single $\alpha$ (virus infectivity).
+Main files in the folder: 
+
+`testScriptMHE.m`: Main test script to run the MHE on the whole horizon.
+`bayesMHEObj.m`: Function performing Hyperparameters Autotuning of the MHE objective funztion by implementig bayesian optimization. 
+`runMHE.m`: Function containing MHE optimization problem in CasADi framework. 
+`PlottingMHE.m`: Code to plot the results of the MHE. 
+
+<b><u>MHE Age Stratified</u></b>: 
+Folder containing all the codes to run the simulation of the SIDTHE age-stratified model, with multiple $\alpha$ (virus infectivity).
+Main files in the folder: 
+
+`testScriptMHE_a.m`: Main test script to run the MHE on the whole horizon.
+`bayesMHEObj_a.m`: Function performing Hyperparameters Autotuning of the MHE objective funztion by implementig bayesian optimization. 
+`runMHE_a.m`: Function containing MHE optimization problem in CasADi framework. 
+`PlottingMHE_a.m`: Code to plot the results of the MHE. 
+

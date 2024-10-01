@@ -1,8 +1,8 @@
 clc
 clear all 
 close all
-load SmoothVariantasIta.mat
-load '/Users/marcodelloro/Desktop/Pandemic-System-Identification/MHE Age Stratified'/AgeOpti-NewLambda.mat
+load '/Users/marcodelloro/Desktop/Pandemic-System-Identification/MHE Age Stratified/SmoothVariantasIta.mat'
+load '/Users/marcodelloro/Desktop/Pandemic-System-Identification/MHE Age Stratified - Single Alpha'/AgeOpti-TestFinal.mat
 addpath('/Users/marcodelloro/Desktop/Pandemic-System-Identification/Reconstructed Datasets/')
 set(0,'DefaultFigureWindowStyle','docked')
 S_data = readtable('Reconstructed_S.csv'); 
@@ -32,6 +32,62 @@ H_data.old = H_data.old ./Npop;       H_data.ger = H_data.ger ./Npop;
 
 E_data.u40 = E_data.u40 ./Npop;       E_data.mid = E_data.mid ./Npop;      
 E_data.old = E_data.old ./Npop;       E_data.ger = E_data.ger ./Npop;  
+
+% check for the Infected & Detected results 
+
+CsumI = [ cumsum(results.sts.("I-u40")),...
+          cumsum(results.sts.("I-mid")),...
+          cumsum(results.sts.("I-old")),...
+          cumsum(results.sts.("I-ger")) ];
+
+
+CsumD = [ cumsum(results.sts.("D-u40")),...
+          cumsum(results.sts.("D-mid")),...
+          cumsum(results.sts.("D-old")),...
+          cumsum(results.sts.("D-ger")) ];
+
+
+Hres= [ results.sts.("H-u40"),...
+        results.sts.("H-mid"),...
+        results.sts.("H-old"),...
+        results.sts.("H-ger") ];
+
+Eres = [results.sts.("E-u40"),...
+        results.sts.("E-mid"),...
+        results.sts.("E-old"),...
+        results.sts.("E-ger") ];
+
+
+
+isValid = true;  
+for ii = 1:size(CsumD, 2)
+    if any(CsumD(:, ii) >= CsumI(:, ii))
+        fprintf('Column %d does not satisfy the condition.\n', ii);
+        isValid = false;
+    end
+end
+
+if isValid
+    disp('CsumD is always less than or equal to CsumI.');
+else
+    disp('One or more columns do not satisfy the condition.');
+end
+
+
+isValid2 = true;  
+for ii = 1:size(CsumD, 2)
+    if any( (Hres(:, ii) + Eres(:,ii)) >= CsumI(:, ii) )
+        fprintf('Column %d does not satisfy the condition.\n', ii);
+        isValid2 = false;
+    end
+end
+
+if isValid2
+    disp('H is always less than or equal to CsumI.');
+else
+    disp('H is way too big');
+end
+
 
 %% Plotting Settings
 
@@ -1374,8 +1430,6 @@ sgtitle('\textbf{H - Healed}', 'Interpreter', 'latex');
 %                                        ---- Plot with NPIs ----                  %
 
 figure(14)
-% Subplot 1: Under 40
-subplot(2, 2, 1);
 plot(date(N_mhe:N-N_mhe), results.par.("alp-u40"), 'LineWidth', 2, 'MarkerSize', 5, 'Color',[0 0 0]);
 xlim([date(1+N_mhe), date(end-N_mhe)]);
 hold on 
@@ -1397,75 +1451,6 @@ title('\textbf{Under 40}', 'Interpreter', 'latex');
 grid on, box on 
 ylim([min(results.par.("alp-u40"))*0.8, max(results.par.("alp-u40"))*1.2]);
 set(gca, 'TickLabelInterpreter', 'Latex');
-% Subplot 2: Middle aged (40-59)
-subplot(2, 2, 2);
-plot(date(N_mhe:N-N_mhe), results.par.("alp-mid"), 'LineWidth', 2, 'MarkerSize', 5, 'Color',[0 0 0]);
-xlim([date(1+N_mhe), date(end-N_mhe)]);
-hold on
-for ii = 1:length(policy_dates)-1
-    handleVisibilityValue = 'off';
-    if ii >= 1 && ii <= 4
-        handleVisibilityValue = 'on';
-    end
-    fill(areaNPI.x(ii, :) ,areaNPI.y_alpha(1, :), customColors2{ii,1} ,...
-        'FaceAlpha',.5,'EdgeColor', 'none','HandleVisibility', handleVisibilityValue)
-    hold on
-    xline(policy_dates(ii),":",'HandleVisibility', 'off')
-    hold on 
-end
-for idx = policy_idx
-    xline(date(idx), '--', 'Color', [0.5 0.5 0.5 0.3], 'LineWidth', 1.5);
-end
-title('\textbf{Middle aged (40-59)}', 'Interpreter', 'latex');
-grid on, box on 
-set(gca, 'TickLabelInterpreter', 'Latex');
-ylim([min(results.par.("alp-mid"))*0.8, max(results.par.("alp-mid"))*1.2]);
-% Subplot 3: Senior (60-80)
-subplot(2, 2, 3);
-plot(date(N_mhe:N-N_mhe), results.par.("alp-old"), 'LineWidth', 2, 'MarkerSize', 5, 'Color',[0 0 0]);
-xlim([date(1+N_mhe), date(end-N_mhe)]);
-hold on
-for ii = 1:length(policy_dates)-1
-    handleVisibilityValue = 'off';
-    if ii >= 1 && ii <= 4
-        handleVisibilityValue = 'on';
-    end
-    fill(areaNPI.x(ii, :) ,areaNPI.y_alpha(1, :), customColors2{ii,1} ,...
-        'FaceAlpha',.5,'EdgeColor', 'none','HandleVisibility', handleVisibilityValue)
-    hold on
-    xline(policy_dates(ii),":",'HandleVisibility', 'off')
-    hold on 
-end
-for idx = policy_idx
-    xline(date(idx), '--', 'Color', [0.5 0.5 0.5 0.3], 'LineWidth', 1.5);
-end
-title('\textbf{Senior (60-80)}', 'Interpreter', 'latex');
-grid on, box on 
-ylim([min(results.par.("alp-old"))*0.8, max(results.par.("alp-old"))*1.2]);
-set(gca, 'TickLabelInterpreter', 'Latex');
-% Subplot 4: Geriatric (80+)
-subplot(2, 2, 4);
-plot(date(N_mhe:N-N_mhe), results.par.("alp-ger"), 'LineWidth', 2, 'MarkerSize', 5, 'Color',[0 0 0]);
-hold on 
-for ii = 1:length(policy_dates)-1
-    handleVisibilityValue = 'off';
-    if ii >= 1 && ii <= 4
-        handleVisibilityValue = 'on';
-    end
-    fill(areaNPI.x(ii, :) ,areaNPI.y_alpha(1, :), customColors2{ii,1} ,...
-        'FaceAlpha',.5,'EdgeColor', 'none','HandleVisibility', handleVisibilityValue)
-    hold on
-    xline(policy_dates(ii),":",'HandleVisibility', 'off')
-    hold on 
-end
-xlim([date(1+N_mhe), date(end-N_mhe)]);
-title('\textbf{Geriatric (80+)}', 'Interpreter', 'latex');
-grid on, box on 
-ylim([min(results.par.("alp-ger"))*0.8, max(results.par.("alp-ger"))*1.05]);
-set(gca, 'TickLabelInterpreter', 'Latex');
-lgd = legend('Real Data', 'Model', 'Interpreter', 'latex', 'location', 'southeast');
-sgtitle('\textbf{$\alpha$ - Transmission rate}', 'Interpreter', 'latex');
-
 
 %                                        ---- Plot with variants ----                  %
 
