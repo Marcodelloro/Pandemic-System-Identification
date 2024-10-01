@@ -94,7 +94,7 @@ Main files in the folder:
 
 `testScriptMHE_a.m`: Main test script to run the MHE on the whole horizon.
 
-`bayesMHEObj_a.m`: Function performing Hyperparameters Autotuning of the MHE objective funztion by implementig bayesian optimization.
+`bayesMHEObj_a.m`: Function performing Hyperparameters Autotuning of the MHE objective function by implementig bayesian optimization.
 
 `runMHE_a.m`: Function containing MHE optimization problem in CasADi framework.
 
