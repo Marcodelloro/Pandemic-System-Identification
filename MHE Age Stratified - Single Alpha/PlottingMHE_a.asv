@@ -396,54 +396,62 @@ sgtitle('\textbf{I - Infected}', 'Interpreter', 'latex');
 
 %% D Compartment ALL plots
 
-scatsize = 20;
+scatsize = 7;
+deltadate = 120;
+specDates = [date(N_mhe), date(N_mhe+deltadate), date(N_mhe+2*deltadate)];
+
 figure(5)
 t = tiledlayout(2,2, 'Padding', 'compact', 'TileSpacing', 'compact');
 ylabel(t, 'Detected Individuals', 'Interpreter', 'latex');
 nexttile
 % Subplot 1: Under 40
-scatter(date(N_mhe:N-N_mhe), D_data.u40(N_mhe:N-N_mhe)*Npop, 50, 'filled', 'MarkerFaceAlpha', 0.5); % Increased size and added transparency
+scatter(date(N_mhe:N-N_mhe), D_data.u40(N_mhe:N-N_mhe)*Npop, scatsize, 'filled', 'MarkerFaceAlpha', 0.5); % Increased size and added transparency
 hold on;
-plot(date(N_mhe:N-N_mhe), results.sts.("D-u40")*Npop, 'LineWidth', 2, 'MarkerSize', 5);
+plot(date(N_mhe:N-N_mhe), results.sts.("D-u40")*Npop, 'LineWidth', 1, 'MarkerSize', 5);
 xlim([date(1+N_mhe), date(end-N_mhe)]);
 ylim([0,max(results.sts.("D-u40"))*1.05*Npop])
 title('\textbf{$<$ 40}', 'Interpreter', 'latex');
 grid on, box on 
 set(gca, 'TickLabelInterpreter', 'Latex');
-xtickformat('MM-yy'); 
+xticks(specDates);
+xticklabels(datestr(specDates, 'mm-yy'));
 % Subplot 2: Middle aged (40-59)
 nexttile
-scatter(date(N_mhe:N-N_mhe), D_data.mid(N_mhe:N-N_mhe)*Npop, 50, 'filled', 'MarkerFaceAlpha', 0.5); % Increased size and added transparency
+scatter(date(N_mhe:N-N_mhe), D_data.mid(N_mhe:N-N_mhe)*Npop, scatsize, 'filled', 'MarkerFaceAlpha', 0.5); % Increased size and added transparency
 hold on 
-plot(date(N_mhe:N-N_mhe), results.sts.("D-mid")*Npop, 'LineWidth', 2, 'MarkerSize', 5);
+plot(date(N_mhe:N-N_mhe), results.sts.("D-mid")*Npop, 'LineWidth', 1, 'MarkerSize', 5);
 xlim([date(1+N_mhe), date(end-N_mhe)]);
 ylim([0,max(results.sts.("D-mid"))*1.05*Npop])
 title('\textbf{40-59}', 'Interpreter', 'latex');
 grid on, box on 
 set(gca, 'TickLabelInterpreter', 'Latex');
-xtickformat('MM-yy'); % Format x-ticks as 'mm-yy'
+xticks(specDates);
+xtickformat('MM-yy'); 
 % Subplot 3: Senior (60-80)
 nexttile
-scatter(date(N_mhe:N-N_mhe), D_data.old(N_mhe:N-N_mhe)*Npop, 50, 'filled', 'MarkerFaceAlpha', 0.5); % Increased size and added transparency
+scatter(date(N_mhe:N-N_mhe), D_data.old(N_mhe:N-N_mhe)*Npop, scatsize, 'filled', 'MarkerFaceAlpha', 0.5); % Increased size and added transparency
 hold on;
-plot(date(N_mhe:N-N_mhe), results.sts.("D-old")*Npop, 'LineWidth', 2, 'MarkerSize', 5);
+plot(date(N_mhe:N-N_mhe), results.sts.("D-old")*Npop, 'LineWidth', 1, 'MarkerSize', 5);
 xlim([date(1+N_mhe), date(end-N_mhe)]);
 ylim([0,max(results.sts.("D-old"))*1.05*Npop])
 title('\textbf{60-79}', 'Interpreter', 'latex');
 grid on, box on 
 set(gca, 'TickLabelInterpreter', 'Latex');
 xtickformat('MM-yy'); % Format x-ticks as 'mm-yy'
+xticks(specDates);
+xtickformat('MM-yy'); 
 % Subplot 4: Geriatric (80+)
 nexttile
-scatter(date(N_mhe:N-N_mhe), D_data.ger(N_mhe:N-N_mhe)*Npop, 50, 'filled', 'MarkerFaceAlpha', 0.5); % Increased size and added transparency
+scatter(date(N_mhe:N-N_mhe), D_data.ger(N_mhe:N-N_mhe)*Npop, scatsize, 'filled', 'MarkerFaceAlpha', 0.5); % Increased size and added transparency
 hold on;
-plot(date(N_mhe:N-N_mhe), results.sts.("D-ger")*Npop, 'LineWidth', 2, 'MarkerSize', 5);
+plot(date(N_mhe:N-N_mhe), results.sts.("D-ger")*Npop, 'LineWidth', 1, 'MarkerSize', 5);
 xlim([date(1+N_mhe), date(end-N_mhe)]);
 ylim([0,max(results.sts.("D-ger"))*1.05*Npop])
 title('\textbf{$\geq$ 80}', 'Interpreter', 'latex');
 grid on, box on 
 set(gca, 'TickLabelInterpreter', 'Latex');
-xtickformat('MM-yy'); % Format x-ticks as 'mm-yy'
+xticks(specDates);
+xtickformat('MM-yy'); 
 % lgd = legend('Real Data', 'Model', 'Interpreter', 'latex', 'location', 'northeast');
 % sgtitle('\textbf{D - Detected}', 'Interpreter', 'latex');
 
@@ -451,13 +459,20 @@ xtickformat('MM-yy'); % Format x-ticks as 'mm-yy'
 %%                                        ---- Plot with NPIs ----                  %
 
 figure(6)
+t = tiledlayout(2,2, 'Padding', 'compact', 'TileSpacing', 'compact');
+ylabel(t, 'Detected Individuals', 'Interpreter', 'latex');
+nexttile
 % Subplot 1: Under 40
-subplot(2, 2, 1);
-scatter(date(N_mhe:N-N_mhe), D_data.u40(N_mhe:N-N_mhe), 50, 'filled', 'MarkerFaceAlpha', 0.5);
+scatter(date(N_mhe:N-N_mhe), D_data.u40(N_mhe:N-N_mhe)*Npop, scatsize, 'filled', 'MarkerFaceAlpha', 0.5); % Increased size and added transparency
 hold on;
-plot(date(N_mhe:N-N_mhe), results.sts.("D-u40"), 'LineWidth', 2, 'MarkerSize', 5, 'Color',[0 0 0]);
+plot(date(N_mhe:N-N_mhe), results.sts.("D-u40")*Npop, 'LineWidth', 1, 'MarkerSize', 5);
 xlim([date(1+N_mhe), date(end-N_mhe)]);
-ylim([0,6e-3])
+ylim([0,max(results.sts.("D-u40"))*1.05*Npop])
+title('\textbf{$<$ 40}', 'Interpreter', 'latex');
+grid on, box on 
+set(gca, 'TickLabelInterpreter', 'Latex');
+xticks(specDates);
+xticklabels(datestr(specDates, 'mm-yy'));
 hold on 
 for ii = 1:length(policy_dates)-1
     handleVisibilityValue = 'off';
@@ -473,16 +488,18 @@ end
 for idx = policy_idx
     xline(date(idx), '--', 'Color', [0.5 0.5 0.5 0.3], 'LineWidth', 1.5);
 end
-title('\textbf{Under 40}', 'Interpreter', 'latex');
-grid on, box on 
-set(gca, 'TickLabelInterpreter', 'Latex');
 % Subplot 2: Middle aged (40-59)
-subplot(2, 2, 2);
-scatter(date(N_mhe:N-N_mhe), D_data.mid(N_mhe:N-N_mhe), 50, 'filled', 'MarkerFaceAlpha', 0.5);
+nexttile
+scatter(date(N_mhe:N-N_mhe), D_data.mid(N_mhe:N-N_mhe)*Npop, scatsize, 'filled', 'MarkerFaceAlpha', 0.5); % Increased size and added transparency
 hold on 
-plot(date(N_mhe:N-N_mhe), results.sts.("D-mid"), 'LineWidth', 2, 'MarkerSize', 5, 'Color',[0 0 0]);
+plot(date(N_mhe:N-N_mhe), results.sts.("D-mid")*Npop, 'LineWidth', 1, 'MarkerSize', 5);
 xlim([date(1+N_mhe), date(end-N_mhe)]);
-ylim([0,5e-3])
+ylim([0,max(results.sts.("D-mid"))*1.05*Npop])
+title('\textbf{40-59}', 'Interpreter', 'latex');
+grid on, box on 
+set(gca, 'TickLabelInterpreter', 'Latex');
+xticks(specDates);
+xtickformat('MM-yy'); 
 hold on
 for ii = 1:length(policy_dates)-1
     handleVisibilityValue = 'off';
@@ -498,17 +515,20 @@ end
 for idx = policy_idx
     xline(date(idx), '--', 'Color', [0.5 0.5 0.5 0.3], 'LineWidth', 1.5);
 end
-title('\textbf{Middle aged (40-59)}', 'Interpreter', 'latex');
-grid on, box on 
-set(gca, 'TickLabelInterpreter', 'Latex');
-% Subplot 3: Senior (60-80)
-subplot(2, 2, 3);
-scatter(date(N_mhe:N-N_mhe), D_data.old(N_mhe:N-N_mhe), 50, 'filled', 'MarkerFaceAlpha', 0.5);
+% Subplot 2: Middle aged (40-59)
+nexttile
+scatter(date(N_mhe:N-N_mhe), D_data.old(N_mhe:N-N_mhe)*Npop, scatsize, 'filled', 'MarkerFaceAlpha', 0.5); % Increased size and added transparency
 hold on;
-plot(date(N_mhe:N-N_mhe), results.sts.("D-old"), 'LineWidth', 2, 'MarkerSize', 5, 'Color',[0 0 0]);
+plot(date(N_mhe:N-N_mhe), results.sts.("D-old")*Npop, 'LineWidth', 1, 'MarkerSize', 5);
 xlim([date(1+N_mhe), date(end-N_mhe)]);
-ylim([0,3e-3])
-hold on
+ylim([0,max(results.sts.("D-old"))*1.05*Npop])
+title('\textbf{60-79}', 'Interpreter', 'latex');
+grid on, box on 
+set(gca, 'TickLabelInterpreter', 'Latex');
+xtickformat('MM-yy'); % Format x-ticks as 'mm-yy'
+xticks(specDates);
+xtickformat('MM-yy'); 
+hold on 
 for ii = 1:length(policy_dates)-1
     handleVisibilityValue = 'off';
     if ii >= 1 && ii <= 4
@@ -523,15 +543,19 @@ end
 for idx = policy_idx
     xline(date(idx), '--', 'Color', [0.5 0.5 0.5 0.3], 'LineWidth', 1.5);
 end
-title('\textbf{Senior (60-80)}', 'Interpreter', 'latex');
-grid on, box on 
-ylim([0,30e-4])
-set(gca, 'TickLabelInterpreter', 'Latex');
 % Subplot 4: Geriatric (80+)
-subplot(2, 2, 4);
-scatter(date(N_mhe:N-N_mhe), D_data.ger(N_mhe:N-N_mhe), 50, 'filled', 'MarkerFaceAlpha', 0.5);
+nexttile
+scatter(date(N_mhe:N-N_mhe), D_data.ger(N_mhe:N-N_mhe)*Npop, scatsize, 'filled', 'MarkerFaceAlpha', 0.5); % Increased size and added transparency
 hold on;
-plot(date(N_mhe:N-N_mhe), results.sts.("D-ger"), 'LineWidth', 2, 'MarkerSize', 5, 'Color',[0 0 0]);
+plot(date(N_mhe:N-N_mhe), results.sts.("D-ger")*Npop, 'LineWidth', 1, 'MarkerSize', 5);
+xlim([date(1+N_mhe), date(end-N_mhe)]);
+ylim([0,max(results.sts.("D-ger"))*1.05*Npop])
+title('\textbf{$\geq$ 80}', 'Interpreter', 'latex');
+grid on, box on 
+set(gca, 'TickLabelInterpreter', 'Latex');
+xticks(specDates);
+xtickformat('MM-yy'); 
+hold on 
 for ii = 1:length(policy_dates)-1
     handleVisibilityValue = 'off';
     if ii >= 1 && ii <= 4
@@ -543,16 +567,8 @@ for ii = 1:length(policy_dates)-1
     xline(policy_dates(ii),":",'HandleVisibility', 'off')
     hold on 
 end
-xlim([date(1+N_mhe), date(end-N_mhe)]);
-ylim([0,18e-4])
-title('\textbf{Geriatric (80+)}', 'Interpreter', 'latex');
-grid on, box on 
-set(gca, 'TickLabelInterpreter', 'Latex');
-lgd = legend('Real Data', 'Model', 'Interpreter', 'latex', 'location', 'northeast');
-sgtitle('\textbf{D - Detected}', 'Interpreter', 'latex');
 
-
-%                                        ---- Plot with variants ----                  %
+%%                                       ---- Plot with variants ----                  %
 
 figure(7)
 % Subplot 1: Under 40
