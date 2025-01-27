@@ -10,6 +10,10 @@ This repository contains the codes and data for the system identification part r
 
 `TestingSIDTHE.jl`: Code to test the behaviour of the system to parameters obtained from moving horizon estimation (MHE).
 
+`Identifiability.jl`: Code to test the _Structural Identifiability_ of the SIDTHE-age model. The test is performed by means of the projection-based elimination algorithm implemented in the Julia toolbox [StructuralIdentifiability.jl](https://docs.sciml.ai/StructuralIdentifiability/stable/).
+
+`RepNumbR0.jl`: Test code to evaluate the reproduction number of the SIDTHE-age model. The method seeks for an analytic computation of $R_0$, harnessing the next-generation matrix (NGM).
+
 ## Data Folders 
 
 <b><u>Age Compartments Distributions</u></b>: 
@@ -74,10 +78,10 @@ Reconstructed datasets of the Italian population divided in four age groups:
 
 ## MHE Matlab Folders 
 
-<b><u>MHE Age Stratified - Single alpha</u></b>: 
+<b><u>MHE Age Stratified</u></b>: 
 
-Folder containing all the codes to run the simulation of the SIDTHE age-stratified model, with single $\alpha$ (virus infectivity).
-Main files in the folder: 
+Folder containing all the codes to run the simulation of the SIDTHE age-stratified model, with multiple $\alpha$ (virus infectivity).
+Main files in the folder:
 
 `testScriptMHE.m`: Main test script to run the MHE on the whole horizon.
 
@@ -87,10 +91,10 @@ Main files in the folder:
 
 `PlottingMHE.m`: Code to plot the results of the MHE.
 
-<b><u>MHE Age Stratified</u></b>: 
+<b><u>MHE Age Stratified - Single alpha</u></b>: 
 
-Folder containing all the codes to run the simulation of the SIDTHE age-stratified model, with multiple $\alpha$ (virus infectivity).
-Main files in the folder:
+Folder containing all the codes to run the simulation of the SIDTHE age-stratified model, with single $\alpha$ (virus infectivity).
+Main files in the folder: 
 
 `testScriptMHE_a.m`: Main test script to run the MHE on the whole horizon.
 
@@ -100,3 +104,12 @@ Main files in the folder:
 
 `PlottingMHE_a.m`: Code to plot the results of the MHE.
 
+`Switch.m`: Code to test the optimized weights on the moving horizon estimation framework. Results extracted are the one final one. 
+
+`PlotsJournal.m`: Code to plot the results of the MHE with Journal specifics.
+
+`PlotsAppendix.m`: Code to plot the results of the MHE for the Journal appenix.
+
+<b><u>Images</u></b>: 
+
+Folder containing all the plots _(.pdf/.eps)_ produced by this work. Most of them are destined to the Journal body and appendix.
